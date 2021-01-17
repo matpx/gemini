@@ -19,7 +19,7 @@ unsafe impl Zeroable for Vertex {}
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct EntityUniform {
-    model: [f32; 16],
+    model: glam::Mat4,
 }
 
 unsafe impl Pod for EntityUniform {}
@@ -93,13 +93,11 @@ async fn run() {
         usage: wgpu::BufferUsage::INDEX,
     });
 
-    let mx_model = glam::Mat4::identity();
-
     let entity_uniform_size = std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress;
     let quad_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: None,
         contents: bytemuck::bytes_of(&EntityUniform {
-            model: *mx_model.as_ref(),
+            model: glam::Mat4::identity(),
         }),
         usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
     });
