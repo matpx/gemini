@@ -6,6 +6,9 @@ use winit::{
     window::Window,
 };
 
+mod ecs;
+mod gpu;
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Vertex {

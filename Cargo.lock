@@ -461,6 +461,7 @@ dependencies = [
  "bytemuck",
  "glam",
  "pollster",
+ "slab",
  "wgpu",
  "winit",
 ]
