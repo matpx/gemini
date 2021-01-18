@@ -1,15 +1,17 @@
-use super::components::*;
+use super::Entity;
 use crate::gpu::{Mesh, RenderPipeline};
 use slab::Slab;
-use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct Scene {
-    meshes: Slab<Mesh>,
-    pipelines: Slab<RenderPipeline>,
+    pub meshes: Slab<Mesh>,
+    pub pipelines: Slab<RenderPipeline>,
 
-    mesh_components: HashMap<usize, MeshComponent>,
-    material_components: HashMap<usize, MaterialComponent>,
-    transform_components: HashMap<usize, TransformComponent>,
+    pub entities: Vec<Entity>,
+}
 
-    entitiy_counter: usize,
+impl Scene {
+    pub fn new() -> Self {
+        Default::default()
+    }
 }

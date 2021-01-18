@@ -1,13 +1,16 @@
+#[derive(Debug, Clone, Copy, Default)]
 pub struct TransformComponent {
-    position: glam::Vec3,
-    scale: glam::Vec3,
-    rotation: glam::Quat,
+    pub position: glam::Vec3,
+    pub scale: glam::Vec3,
+    pub rotation: glam::Quat,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
 pub struct MeshComponent {
-    mesh_id: usize,
+    pub mesh_id: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
 pub struct MaterialComponent {
-    pipeline_id: usize,
+    pub pipeline_id: usize,
 }

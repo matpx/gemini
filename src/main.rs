@@ -1,4 +1,6 @@
 use bytemuck::{Pod, Zeroable};
+use ecs::{Entity, MaterialComponent, MeshComponent};
+use gpu::RenderPipeline;
 use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
     event::{Event, WindowEvent},
@@ -62,6 +64,8 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
+    let mut scene = ecs::Scene::new();
+
     let vertex_data = [
         Vertex {
             pos: [-0.5, 0.5, 0.0],
@@ -79,16 +83,21 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let index_data: &[u16] = &[2, 1, 0, 0, 3, 2];
 
-    let vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Vertex Buffer"),
         contents: bytemuck::cast_slice(&vertex_data),
         usage: wgpu::BufferUsage::VERTEX,
     });
 
-    let index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Index Buffer"),
         contents: bytemuck::cast_slice(&index_data),
         usage: wgpu::BufferUsage::INDEX,
+    });
+
+    let mesh = scene.meshes.insert(gpu::Mesh {
+        vertex_buffer,
+        index_buffer,
     });
 
     let entity_uniform_size = std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress;
@@ -132,41 +141,52 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         push_constant_ranges: &[],
     });
 
-    let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some("main"),
-        layout: Some(&pipeline_layout),
-        vertex_stage: wgpu::ProgrammableStageDescriptor {
-            module: &vs_module,
-            entry_point: "main",
-        },
-        fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-            module: &fs_module,
-            entry_point: "main",
-        }),
-        rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-            front_face: wgpu::FrontFace::Ccw,
-            cull_mode: wgpu::CullMode::Back,
-            ..Default::default()
-        }),
-        primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-        color_states: &[sc_desc.format.into()],
-        depth_stencil_state: None,
-        vertex_state: wgpu::VertexStateDescriptor {
-            index_format: wgpu::IndexFormat::Uint16,
-            vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                step_mode: wgpu::InputStepMode::Vertex,
-                attributes: &[wgpu::VertexAttributeDescriptor {
-                    format: wgpu::VertexFormat::Float3,
-                    offset: 0,
-                    shader_location: 0,
+    let pipeline = scene.pipelines.insert(RenderPipeline {
+        pipeline: device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("main"),
+            layout: Some(&pipeline_layout),
+            vertex_stage: wgpu::ProgrammableStageDescriptor {
+                module: &vs_module,
+                entry_point: "main",
+            },
+            fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
+                module: &fs_module,
+                entry_point: "main",
+            }),
+            rasterization_state: Some(wgpu::RasterizationStateDescriptor {
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: wgpu::CullMode::Back,
+                ..Default::default()
+            }),
+            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+            color_states: &[sc_desc.format.into()],
+            depth_stencil_state: None,
+            vertex_state: wgpu::VertexStateDescriptor {
+                index_format: wgpu::IndexFormat::Uint16,
+                vertex_buffers: &[wgpu::VertexBufferDescriptor {
+                    stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::InputStepMode::Vertex,
+                    attributes: &[wgpu::VertexAttributeDescriptor {
+                        format: wgpu::VertexFormat::Float3,
+                        offset: 0,
+                        shader_location: 0,
+                    }],
                 }],
-            }],
-        },
-        sample_count: 1,
-        sample_mask: !0,
-        alpha_to_coverage_enabled: false,
+            },
+            sample_count: 1,
+            sample_mask: !0,
+            alpha_to_coverage_enabled: false,
+        }),
     });
+
+    let player = Entity {
+        transform: Default::default(),
+        mesh: MeshComponent { mesh_id: mesh },
+        material: MaterialComponent {
+            pipeline_id: pipeline,
+        },
+        local_bind_group,
+    };
 
     event_loop.run(move |event, _, control_flow| {
         let _ = (
@@ -209,10 +229,19 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                         }],
                         depth_stencil_attachment: None,
                     });
-                    rpass.set_pipeline(&pipeline);
-                    rpass.set_bind_group(0, &local_bind_group, &[]);
-                    rpass.set_index_buffer(index_buf.slice(..));
-                    rpass.set_vertex_buffer(0, vertex_buf.slice(..));
+
+                    let pipeline = &scene
+                        .pipelines
+                        .get(player.material.pipeline_id)
+                        .unwrap()
+                        .pipeline;
+
+                    let mesh = scene.meshes.get(player.mesh.mesh_id).unwrap();
+
+                    rpass.set_pipeline(pipeline);
+                    rpass.set_bind_group(0, &player.local_bind_group, &[]);
+                    rpass.set_index_buffer(mesh.index_buffer.slice(..));
+                    rpass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                     rpass.draw_indexed(0..index_data.len() as u32, 0, 0..1);
                 }
 
