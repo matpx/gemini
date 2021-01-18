@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable};
-use ecs::{Entity, MaterialComponent, MeshComponent};
+use components::TransformComponent;
+use components::*;
 use gpu::RenderPipeline;
 use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
@@ -8,8 +9,9 @@ use winit::{
     window::Window,
 };
 
-mod ecs;
+mod components;
 mod gpu;
+mod scene;
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -64,7 +66,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-    let mut scene = ecs::Scene::new();
+    let mut scene = scene::Scene::new();
 
     let vertex_data = [
         Vertex {
@@ -93,11 +95,6 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         label: Some("Index Buffer"),
         contents: bytemuck::cast_slice(&index_data),
         usage: wgpu::BufferUsage::INDEX,
-    });
-
-    let mesh = scene.meshes.insert(gpu::Mesh {
-        vertex_buffer,
-        index_buffer,
     });
 
     let entity_uniform_size = std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress;
@@ -130,6 +127,12 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
             resource: wgpu::BindingResource::Buffer(quad_uniform_buffer.slice(..)),
         }],
         label: None,
+    });
+
+    let mesh = scene.meshes.insert(gpu::Mesh {
+        vertex_buffer,
+        index_buffer,
+        local_bind_group,
     });
 
     let vs_module = device.create_shader_module(wgpu::include_spirv!("shader/unlit.vert.spv"));
@@ -179,14 +182,17 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         }),
     });
 
-    let player = Entity {
-        transform: Default::default(),
-        mesh: MeshComponent { mesh_id: mesh },
-        material: MaterialComponent {
+    let player = scene.world.push((
+        MeshComponent { mesh_id: mesh },
+        MaterialComponent {
             pipeline_id: pipeline,
         },
-        local_bind_group,
-    };
+        TransformComponent {
+            position: glam::Vec3::zero(),
+            scale: glam::Vec3::one(),
+            rotation: glam::Quat::identity(),
+        },
+    ));
 
     event_loop.run(move |event, _, control_flow| {
         let _ = (
@@ -230,16 +236,31 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                         depth_stencil_attachment: None,
                     });
 
+                    let player_entry = scene.world.entry(player).unwrap();
+
                     let pipeline = &scene
                         .pipelines
-                        .get(player.material.pipeline_id)
+                        .get(
+                            player_entry
+                                .get_component::<MaterialComponent>()
+                                .unwrap()
+                                .pipeline_id,
+                        )
                         .unwrap()
                         .pipeline;
 
-                    let mesh = scene.meshes.get(player.mesh.mesh_id).unwrap();
+                    let mesh = scene
+                        .meshes
+                        .get(
+                            player_entry
+                                .get_component::<MeshComponent>()
+                                .unwrap()
+                                .mesh_id,
+                        )
+                        .unwrap();
 
                     rpass.set_pipeline(pipeline);
-                    rpass.set_bind_group(0, &player.local_bind_group, &[]);
+                    rpass.set_bind_group(0, &mesh.local_bind_group, &[]);
                     rpass.set_index_buffer(mesh.index_buffer.slice(..));
                     rpass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                     rpass.draw_indexed(0..index_data.len() as u32, 0, 0..1);

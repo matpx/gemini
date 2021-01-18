@@ -1,5 +1,5 @@
-use super::Entity;
 use crate::gpu::{Mesh, RenderPipeline};
+use legion::World;
 use slab::Slab;
 
 #[derive(Default)]
@@ -7,7 +7,7 @@ pub struct Scene {
     pub meshes: Slab<Mesh>,
     pub pipelines: Slab<RenderPipeline>,
 
-    pub entities: Vec<Entity>,
+    pub world: World,
 }
 
 impl Scene {

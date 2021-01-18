@@ -9,6 +9,7 @@ version = "0.1.0"
 [dependencies]
 bytemuck = "1.5.0"
 glam = "0.12.0"
+legion = "0.3.1"
 pollster = "0.2.0"
 slab = "0.4.2"
 wgpu = "0.6.2"
