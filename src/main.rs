@@ -30,7 +30,7 @@ async fn run() {
     let window = Window::new(&event_loop).unwrap();
 
     let size = window.inner_size();
-    let instance = wgpu::Instance::new(wgpu::BackendBit::VULKAN);
+    let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
     let surface = unsafe { instance.create_surface(&window) };
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
