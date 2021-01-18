@@ -455,6 +455,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gemini"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "pollster",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "gfx-auxil"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -607,17 +618,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ad8819b352632f676098176a51e11e324e8cee4c2518dd67e58c36b848438e6"
 dependencies = [
  "version_check",
-]
-
-[[package]]
-name = "hypergrid"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "glam",
- "pollster",
- "wgpu",
- "winit",
 ]
 
 [[package]]
