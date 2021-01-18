@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use wgpu::util::DeviceExt;
+use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -25,10 +25,7 @@ struct EntityUniform {
 unsafe impl Pod for EntityUniform {}
 unsafe impl Zeroable for EntityUniform {}
 
-async fn run() {
-    let event_loop = EventLoop::new();
-    let window = Window::new(&event_loop).unwrap();
-
+async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: TextureFormat) {
     let size = window.inner_size();
     let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
     let surface = unsafe { instance.create_surface(&window) };
@@ -51,8 +48,6 @@ async fn run() {
         )
         .await
         .expect("Failed to create device");
-
-    let swapchain_format = wgpu::TextureFormat::Bgra8UnormSrgb;
 
     let mut sc_desc = wgpu::SwapChainDescriptor {
         usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
@@ -230,5 +225,26 @@ async fn run() {
 }
 
 fn main() {
-    pollster::block_on(run());
+    let event_loop = EventLoop::new();
+    let window = Window::new(&event_loop).unwrap();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        pollster::block_on(run(event_loop, window, wgpu::TextureFormat::Bgra8UnormSrgb));
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        console_log::init().expect("could not initialize logger");
+        use winit::platform::web::WindowExtWebSys;
+        web_sys::window()
+            .and_then(|win| win.document())
+            .and_then(|doc| doc.body())
+            .and_then(|body| {
+                body.append_child(&web_sys::Element::from(window.canvas()))
+                    .ok()
+            })
+            .expect("couldn't append canvas to document body");
+        wasm_bindgen_futures::spawn_local(run(event_loop, window, wgpu::TextureFormat::Bgra8Unorm));
+    }
 }
