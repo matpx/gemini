@@ -1,6 +1,26 @@
+use bytemuck::{Pod, Zeroable};
 use wgpu::{
     Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor, TextureFormat,
 };
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct EntityUniform {
+    pub model: glam::Mat4,
+}
+
+unsafe impl Pod for EntityUniform {}
+unsafe impl Zeroable for EntityUniform {}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Vertex {
+    pub pos: [f32; 3],
+    //tex_coord: [f32; 2],
+}
+
+unsafe impl Pod for Vertex {}
+unsafe impl Zeroable for Vertex {}
 
 pub struct Mesh {
     pub index_buffer: wgpu::Buffer,

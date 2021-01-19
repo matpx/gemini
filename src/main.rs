@@ -1,7 +1,6 @@
-use bytemuck::{Pod, Zeroable};
 use components::TransformComponent;
 use components::*;
-use gpu::{Context, Material};
+use gpu::{Context, EntityUniform, Material, Vertex};
 use legion::*;
 use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
@@ -13,25 +12,6 @@ use winit::{
 mod components;
 mod gpu;
 mod scene;
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-struct Vertex {
-    pos: [f32; 3],
-    //tex_coord: [f32; 2],
-}
-
-unsafe impl Pod for Vertex {}
-unsafe impl Zeroable for Vertex {}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-struct EntityUniform {
-    model: glam::Mat4,
-}
-
-unsafe impl Pod for EntityUniform {}
-unsafe impl Zeroable for EntityUniform {}
 
 async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: TextureFormat) {
     let mut context = Context::new(&window, swapchain_format).await;
