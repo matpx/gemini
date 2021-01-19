@@ -1,8 +1,8 @@
 use components::TransformComponent;
 use components::*;
-use gpu::{Context, EntityUniform, Material, Vertex};
+use gpu::{Context, EntityUniform, Material, Mesh, Vertex};
 use legion::*;
-use wgpu::{util::DeviceExt, TextureFormat};
+use wgpu::TextureFormat;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -35,34 +35,6 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let index_data: &[u16] = &[2, 1, 0, 0, 3, 2];
 
-    let vertex_buffer = context
-        .device
-        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(&vertex_data),
-            usage: wgpu::BufferUsage::VERTEX,
-        });
-
-    let index_buffer = context
-        .device
-        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(&index_data),
-            usage: wgpu::BufferUsage::INDEX,
-        });
-
-    let entity_uniform_size = std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress;
-    let quad_uniform_buffer =
-        context
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: bytemuck::bytes_of(&EntityUniform {
-                    model: glam::Mat4::identity(),
-                }),
-                usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-            });
-
     let local_bind_group_layout =
         context
             .device
@@ -72,84 +44,27 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::UniformBuffer {
                         dynamic: false,
-                        min_binding_size: wgpu::BufferSize::new(entity_uniform_size),
+                        min_binding_size: wgpu::BufferSize::new(
+                            std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress,
+                        ),
                     },
                     count: None,
                 }],
                 label: None,
             });
 
-    let local_bind_group = context
-        .device
-        .create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &local_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(quad_uniform_buffer.slice(..)),
-            }],
-            label: None,
-        });
+    let mesh = scene.meshes.insert(Mesh::new(
+        &context.device,
+        &local_bind_group_layout,
+        &vertex_data,
+        &index_data,
+    ));
 
-    let mesh = scene.meshes.insert(gpu::Mesh {
-        vertex_buffer,
-        index_buffer,
-        local_bind_group,
-    });
-
-    let vs_module = context
-        .device
-        .create_shader_module(wgpu::include_spirv!("shader/unlit.vert.spv"));
-    let fs_module = context
-        .device
-        .create_shader_module(wgpu::include_spirv!("shader/unlit.frag.spv"));
-
-    let pipeline_layout = context
-        .device
-        .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: None,
-            bind_group_layouts: &[&local_bind_group_layout],
-            push_constant_ranges: &[],
-        });
-
-    let material_id = scene.materials.insert(Material {
-        pipeline: context
-            .device
-            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("main"),
-                layout: Some(&pipeline_layout),
-                vertex_stage: wgpu::ProgrammableStageDescriptor {
-                    module: &vs_module,
-                    entry_point: "main",
-                },
-                fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                    module: &fs_module,
-                    entry_point: "main",
-                }),
-                rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: wgpu::CullMode::Back,
-                    ..Default::default()
-                }),
-                primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-                color_states: &[context.swap_chain_desc.format.into()],
-                depth_stencil_state: None,
-                vertex_state: wgpu::VertexStateDescriptor {
-                    index_format: wgpu::IndexFormat::Uint16,
-                    vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                        stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                        step_mode: wgpu::InputStepMode::Vertex,
-                        attributes: &[wgpu::VertexAttributeDescriptor {
-                            format: wgpu::VertexFormat::Float3,
-                            offset: 0,
-                            shader_location: 0,
-                        }],
-                    }],
-                },
-                sample_count: 1,
-                sample_mask: !0,
-                alpha_to_coverage_enabled: false,
-            }),
-    });
+    let material_id = scene.materials.insert(Material::new(
+        &context.device,
+        &local_bind_group_layout,
+        swapchain_format,
+    ));
 
     scene.world.push((
         MeshComponent { mesh_id: mesh },
