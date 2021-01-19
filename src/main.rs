@@ -2,6 +2,7 @@ use bytemuck::{Pod, Zeroable};
 use components::TransformComponent;
 use components::*;
 use gpu::RenderPipeline;
+use legion::*;
 use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
     event::{Event, WindowEvent},
@@ -182,7 +183,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         }),
     });
 
-    let player = scene.world.push((
+    scene.world.push((
         MeshComponent { mesh_id: mesh },
         MaterialComponent {
             pipeline_id: pipeline,
@@ -236,34 +237,18 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                         depth_stencil_attachment: None,
                     });
 
-                    let player_entry = scene.world.entry(player).unwrap();
+                    for (mesh, material) in
+                        <(&MeshComponent, &MaterialComponent)>::query().iter(&scene.world)
+                    {
+                        let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
+                        let render_pipeline = scene.pipelines.get(material.pipeline_id).unwrap();
 
-                    let pipeline = &scene
-                        .pipelines
-                        .get(
-                            player_entry
-                                .get_component::<MaterialComponent>()
-                                .unwrap()
-                                .pipeline_id,
-                        )
-                        .unwrap()
-                        .pipeline;
-
-                    let mesh = scene
-                        .meshes
-                        .get(
-                            player_entry
-                                .get_component::<MeshComponent>()
-                                .unwrap()
-                                .mesh_id,
-                        )
-                        .unwrap();
-
-                    rpass.set_pipeline(pipeline);
-                    rpass.set_bind_group(0, &mesh.local_bind_group, &[]);
-                    rpass.set_index_buffer(mesh.index_buffer.slice(..));
-                    rpass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                    rpass.draw_indexed(0..index_data.len() as u32, 0, 0..1);
+                        rpass.set_pipeline(&render_pipeline.pipeline);
+                        rpass.set_bind_group(0, &gpu_mesh.local_bind_group, &[]);
+                        rpass.set_index_buffer(gpu_mesh.index_buffer.slice(..));
+                        rpass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
+                        rpass.draw_indexed(0..index_data.len() as u32, 0, 0..1);
+                    }
                 }
 
                 queue.submit(Some(encoder.finish()));
