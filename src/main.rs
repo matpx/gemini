@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use components::TransformComponent;
 use components::*;
-use gpu::RenderPipeline;
+use gpu::Material;
 use legion::*;
 use wgpu::{util::DeviceExt, TextureFormat};
 use winit::{
@@ -145,7 +145,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         push_constant_ranges: &[],
     });
 
-    let pipeline = scene.pipelines.insert(RenderPipeline {
+    let material_id = scene.materials.insert(Material {
         pipeline: device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("main"),
             layout: Some(&pipeline_layout),
@@ -186,7 +186,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
     scene.world.push((
         MeshComponent { mesh_id: mesh },
         MaterialComponent {
-            pipeline_id: pipeline,
+            material_id,
         },
         TransformComponent {
             position: glam::Vec3::zero(),
@@ -241,9 +241,9 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                         <(&MeshComponent, &MaterialComponent)>::query().iter(&scene.world)
                     {
                         let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
-                        let render_pipeline = scene.pipelines.get(material.pipeline_id).unwrap();
+                        let gpu_material = scene.materials.get(material.material_id).unwrap();
 
-                        rpass.set_pipeline(&render_pipeline.pipeline);
+                        rpass.set_pipeline(&gpu_material.pipeline);
                         rpass.set_bind_group(0, &gpu_mesh.local_bind_group, &[]);
                         rpass.set_index_buffer(gpu_mesh.index_buffer.slice(..));
                         rpass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));

@@ -4,6 +4,6 @@ pub struct Mesh {
     pub local_bind_group: wgpu::BindGroup,
 }
 
-pub struct RenderPipeline {
+pub struct Material {
     pub pipeline: wgpu::RenderPipeline,
 }

@@ -12,5 +12,5 @@ pub struct MeshComponent {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MaterialComponent {
-    pub pipeline_id: usize,
+    pub material_id: usize,
 }
