@@ -1,9 +1,15 @@
 use crate::components::*;
 use crate::scene::Scene;
 use legion::*;
-use wgpu::{Device, Queue, SwapChain};
+use wgpu::{BindGroup, Device, Queue, SwapChain};
 
-pub fn render(device: &Device, swap_chain: &mut SwapChain, queue: &Queue, scene: &Scene) {
+pub fn render(
+    device: &Device,
+    swap_chain: &mut SwapChain,
+    queue: &Queue,
+    global_bind_group: &BindGroup,
+    scene: &Scene,
+) {
     let frame = swap_chain
         .get_current_frame()
         .expect("Failed to acquire next swap chain texture")
@@ -28,7 +34,8 @@ pub fn render(device: &Device, swap_chain: &mut SwapChain, queue: &Queue, scene:
             let gpu_material = scene.materials.get(material.material_id).unwrap();
 
             rpass.set_pipeline(&gpu_material.pipeline);
-            rpass.set_bind_group(0, &gpu_mesh.local_bind_group, &[]);
+            rpass.set_bind_group(0, &global_bind_group, &[]);
+            rpass.set_bind_group(1, &gpu_mesh.local_bind_group, &[]);
             rpass.set_index_buffer(gpu_mesh.index_buffer.slice(..));
             rpass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
             rpass.draw_indexed(0..gpu_mesh.index_count, 0, 0..1);

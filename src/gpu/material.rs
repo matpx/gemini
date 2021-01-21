@@ -9,6 +9,7 @@ pub struct Material {
 impl Material {
     pub fn new(
         device: &Device,
+        global_bind_group_layout: &BindGroupLayout,
         local_bind_group_layout: &BindGroupLayout,
         swap_chain_format: TextureFormat,
     ) -> Self {
@@ -19,7 +20,7 @@ impl Material {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&local_bind_group_layout],
+            bind_group_layouts: &[&global_bind_group_layout, &local_bind_group_layout],
             push_constant_ranges: &[],
         });
 

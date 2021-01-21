@@ -1,5 +1,3 @@
-use bytemuck::{Pod, Zeroable};
-
 #[derive(Debug, Clone, Copy, Default)]
 pub struct TransformComponent {
     pub position: glam::Vec3,
@@ -16,12 +14,3 @@ pub struct MeshComponent {
 pub struct MaterialComponent {
     pub material_id: usize,
 }
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Default)]
-pub struct EntityUniform {
-    pub model: glam::Mat4,
-}
-
-unsafe impl Pod for EntityUniform {}
-unsafe impl Zeroable for EntityUniform {}

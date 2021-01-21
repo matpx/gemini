@@ -1,5 +1,4 @@
-use super::Vertex;
-use crate::components::EntityUniform;
+use super::{EntityUniform, Vertex};
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Device};
 
 pub struct Mesh {

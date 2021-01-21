@@ -34,34 +34,17 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let index_data: &[u16] = &[2, 1, 0, 0, 3, 2];
 
-    let local_bind_group_layout =
-        context
-            .device
-            .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::UniformBuffer {
-                        dynamic: false,
-                        min_binding_size: wgpu::BufferSize::new(
-                            std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress,
-                        ),
-                    },
-                    count: None,
-                }],
-                label: None,
-            });
-
     let mesh = scene.meshes.insert(Mesh::new(
         &context.device,
-        &local_bind_group_layout,
+        &context.local_bind_group_layout,
         &vertex_data,
         &index_data,
     ));
 
     let material_id = scene.materials.insert(Material::new(
         &context.device,
-        &local_bind_group_layout,
+        &context.global_bind_group_layout,
+        &context.local_bind_group_layout,
         swapchain_format,
     ));
 
@@ -95,6 +78,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 &context.device,
                 &mut context.swap_chain,
                 &context.queue,
+                &context.global_bind_group,
                 &scene,
             ),
             Event::WindowEvent {

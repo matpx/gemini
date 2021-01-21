@@ -1,5 +1,7 @@
+use super::{EntityUniform, GlobalUniform};
 use wgpu::{
-    Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor, TextureFormat,
+    util::DeviceExt, Adapter, BindGroup, BindGroupLayout, Buffer, Device, Instance, Queue, Surface,
+    SwapChain, SwapChainDescriptor, TextureFormat,
 };
 
 pub struct Context {
@@ -10,6 +12,10 @@ pub struct Context {
     pub queue: Queue,
     pub swap_chain_desc: SwapChainDescriptor,
     pub swap_chain: SwapChain,
+    pub local_bind_group_layout: BindGroupLayout,
+    pub global_bind_group_layout: BindGroupLayout,
+    pub global_bind_group: BindGroup,
+    pub global_uniform_buffer: Buffer,
 }
 
 impl Context {
@@ -47,6 +53,55 @@ impl Context {
 
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
+        let global_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::UniformBuffer {
+                        dynamic: false,
+                        min_binding_size: wgpu::BufferSize::new(
+                            std::mem::size_of::<GlobalUniform>() as wgpu::BufferAddress,
+                        ),
+                    },
+                    count: None,
+                }],
+                label: None,
+            });
+
+        let global_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: bytemuck::bytes_of(&GlobalUniform {
+                view_proj: glam::Mat4::identity(),
+            }),
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        });
+
+        let global_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &global_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer(global_uniform_buffer.slice(..)),
+            }],
+            label: None,
+        });
+
+        let local_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::UniformBuffer {
+                        dynamic: false,
+                        min_binding_size: wgpu::BufferSize::new(
+                            std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress,
+                        ),
+                    },
+                    count: None,
+                }],
+                label: None,
+            });
+
         Context {
             instance,
             surface,
@@ -55,6 +110,10 @@ impl Context {
             queue,
             swap_chain_desc,
             swap_chain,
+            local_bind_group_layout,
+            global_bind_group_layout,
+            global_bind_group,
+            global_uniform_buffer,
         }
     }
 }
