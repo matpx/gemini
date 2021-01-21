@@ -4,26 +4,23 @@ use legion::*;
 pub fn transform_system(world: &mut World) {
     unsafe {
         for mut transform in <&mut TransformComponent>::query().iter_unchecked(world) {
+            transform.local = glam::Mat4::from_scale_rotation_translation(
+                transform.scale,
+                transform.rotation,
+                transform.translation,
+            );
+
             if let Some(parent) = transform.parent {
-                let parent_model = world
+                let parent_world = world
                     .entry_ref(parent)
                     .unwrap()
                     .get_component::<TransformComponent>()
                     .unwrap()
-                    .model;
+                    .world;
 
-                transform.model =
-                    parent_model.mul_mat4(&glam::Mat4::from_scale_rotation_translation(
-                        transform.scale,
-                        transform.rotation,
-                        transform.translation,
-                    ));
+                transform.world = parent_world.mul_mat4(&transform.local);
             } else {
-                transform.model = glam::Mat4::from_scale_rotation_translation(
-                    transform.scale,
-                    transform.rotation,
-                    transform.translation,
-                );
+                transform.world = transform.local;
             }
         }
     }

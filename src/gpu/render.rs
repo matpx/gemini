@@ -21,7 +21,7 @@ pub fn render(
         let camera_comp = camera_entry.get_component::<CameraComponent>().unwrap();
 
         let proj = camera_comp.proj;
-        let view = camera_transform.model.inverse();
+        let view = camera_transform.world.inverse();
 
         proj.mul_mat4(&view)
     };
@@ -61,7 +61,7 @@ pub fn render(
                 &gpu_mesh.local_buffer,
                 0,
                 bytemuck::bytes_of(&EntityUniform {
-                    model: transform.model,
+                    model: transform.world,
                 }),
             );
 

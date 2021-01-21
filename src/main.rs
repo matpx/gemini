@@ -50,7 +50,10 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         swapchain_format,
     ));
 
-    let player_parent = scene.world.push((TransformComponent::default(), MeshComponent { mesh_id: mesh }));
+    let player_parent = scene.world.push((
+        TransformComponent::default(),
+        MeshComponent { mesh_id: mesh },
+    ));
 
     scene.world.push((
         MeshComponent { mesh_id: mesh },
