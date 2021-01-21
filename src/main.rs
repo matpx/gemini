@@ -1,6 +1,6 @@
 use components::TransformComponent;
 use components::*;
-use gpu::{Context, EntityUniform, Material, Mesh, Vertex};
+use gpu::{Context, Material, Mesh, Vertex};
 use legion::*;
 use wgpu::TextureFormat;
 use winit::{
