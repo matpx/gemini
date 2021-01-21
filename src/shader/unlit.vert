@@ -15,5 +15,5 @@ out gl_PerVertex {
 };
 
 void main() {
-    gl_Position = u_World * vec4(a_Pos, 1.0);
+    gl_Position = u_ViewProj * u_World * vec4(a_Pos, 1.0);
 }

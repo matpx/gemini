@@ -1,15 +1,37 @@
 use crate::components::*;
 use crate::scene::Scene;
 use legion::*;
-use wgpu::{BindGroup, Device, Queue, SwapChain};
+use wgpu::{BindGroup, Buffer, Device, Queue, SwapChain};
+
+use super::GlobalUniform;
 
 pub fn render(
     device: &Device,
     swap_chain: &mut SwapChain,
     queue: &Queue,
     global_bind_group: &BindGroup,
+    global_uniform_buffer: &Buffer,
     scene: &Scene,
+    camera: Entity,
 ) {
+    let view_proj = {
+        let camera_entry = scene.world.entry_ref(camera).unwrap();
+
+        let camera_transform = camera_entry.get_component::<TransformComponent>().unwrap();
+        let camera_comp = camera_entry.get_component::<CameraComponent>().unwrap();
+
+        let proj = camera_comp.proj;
+        let view = camera_transform.model.inverse();
+
+        proj.mul_mat4(&view)
+    };
+
+    queue.write_buffer(
+        global_uniform_buffer,
+        0,
+        bytemuck::bytes_of(&GlobalUniform { view_proj }),
+    );
+
     let frame = swap_chain
         .get_current_frame()
         .expect("Failed to acquire next swap chain texture")

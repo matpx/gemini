@@ -51,12 +51,12 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
     scene.world.push((
         MeshComponent { mesh_id: mesh },
         MaterialComponent { material_id },
-        TransformComponent {
-            position: glam::Vec3::zero(),
-            scale: glam::Vec3::one(),
-            rotation: glam::Quat::identity(),
-        },
+        TransformComponent::default(),
     ));
+
+    let camera = scene
+        .world
+        .push((TransformComponent::default(), CameraComponent::default()));
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -79,7 +79,9 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 &mut context.swap_chain,
                 &context.queue,
                 &context.global_bind_group,
+                &context.global_uniform_buffer,
                 &scene,
+                camera,
             ),
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
