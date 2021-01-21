@@ -7,6 +7,7 @@ pub struct Mesh {
     pub vertex_buffer: wgpu::Buffer,
     pub local_bind_group: wgpu::BindGroup,
     pub uniform_buffer: Buffer,
+    pub index_count: u32,
 }
 
 impl Mesh {
@@ -50,6 +51,7 @@ impl Mesh {
             index_buffer,
             local_bind_group,
             uniform_buffer,
+            index_count: index_data.len() as u32,
         }
     }
 }
