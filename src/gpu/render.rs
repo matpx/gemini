@@ -3,7 +3,7 @@ use crate::scene::Scene;
 use legion::*;
 use wgpu::{BindGroup, Buffer, Device, Queue, SwapChain};
 
-use super::GlobalUniform;
+use super::{EntityUniform, GlobalUniform};
 
 pub fn render(
     device: &Device,
@@ -51,9 +51,19 @@ pub fn render(
             depth_stencil_attachment: None,
         });
 
-        for (mesh, material) in <(&MeshComponent, &MaterialComponent)>::query().iter(&scene.world) {
+        for (transform, mesh, material) in
+            <(&TransformComponent, &MeshComponent, &MaterialComponent)>::query().iter(&scene.world)
+        {
             let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
             let gpu_material = scene.materials.get(material.material_id).unwrap();
+
+            queue.write_buffer(
+                &gpu_mesh.local_buffer,
+                0,
+                bytemuck::bytes_of(&EntityUniform {
+                    model: transform.model,
+                }),
+            );
 
             rpass.set_pipeline(&gpu_material.pipeline);
             rpass.set_bind_group(0, &global_bind_group, &[]);

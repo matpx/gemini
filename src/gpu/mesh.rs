@@ -5,7 +5,7 @@ pub struct Mesh {
     pub index_buffer: wgpu::Buffer,
     pub vertex_buffer: wgpu::Buffer,
     pub local_bind_group: wgpu::BindGroup,
-    pub uniform_buffer: Buffer,
+    pub local_buffer: Buffer,
     pub index_count: u32,
 }
 
@@ -28,7 +28,7 @@ impl Mesh {
             usage: wgpu::BufferUsage::INDEX,
         });
 
-        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let local_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: bytemuck::bytes_of(&EntityUniform {
                 model: glam::Mat4::identity(),
@@ -40,7 +40,7 @@ impl Mesh {
             layout: &local_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(uniform_buffer.slice(..)),
+                resource: wgpu::BindingResource::Buffer(local_buffer.slice(..)),
             }],
             label: None,
         });
@@ -49,7 +49,7 @@ impl Mesh {
             vertex_buffer,
             index_buffer,
             local_bind_group,
-            uniform_buffer,
+            local_buffer,
             index_count: index_data.len() as u32,
         }
     }

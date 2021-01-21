@@ -1,6 +1,7 @@
 use components::TransformComponent;
 use components::*;
 use gpu::{Context, Material, Mesh, Vertex};
+use systems::transform_system;
 use wgpu::TextureFormat;
 use winit::{
     event::{Event, WindowEvent},
@@ -11,6 +12,7 @@ use winit::{
 mod components;
 mod gpu;
 mod scene;
+mod systems;
 
 async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: TextureFormat) {
     let mut context = Context::new(&window, swapchain_format).await;
@@ -74,15 +76,19 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     .device
                     .create_swap_chain(&context.surface, &context.swap_chain_desc);
             }
-            Event::RedrawRequested(_) => gpu::render(
-                &context.device,
-                &mut context.swap_chain,
-                &context.queue,
-                &context.global_bind_group,
-                &context.global_uniform_buffer,
-                &scene,
-                camera,
-            ),
+            Event::RedrawRequested(_) => {
+                transform_system(&mut scene.world);
+
+                gpu::render(
+                    &context.device,
+                    &mut context.swap_chain,
+                    &context.queue,
+                    &context.global_bind_group,
+                    &context.global_uniform_buffer,
+                    &scene,
+                    camera,
+                );
+            }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
