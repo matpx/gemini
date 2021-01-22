@@ -11,6 +11,7 @@ use winit::{
 
 mod components;
 mod gpu;
+mod resources;
 mod scene;
 mod systems;
 
@@ -64,6 +65,8 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         },
     ));
 
+    resources::load_gltf("assets/gltf/monkey.glb", &mut scene);
+
     let camera = scene
         .world
         .push((TransformComponent::default(), CameraComponent::default()));
@@ -92,7 +95,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     .get_component_mut::<TransformComponent>()
                     .unwrap()
                     .translation
-                    .x += 0.01;
+                    .x += 0.001;
 
                 transform_system(&mut scene.world);
 
