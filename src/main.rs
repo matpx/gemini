@@ -93,7 +93,9 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 WindowEvent::KeyboardInput { input, .. } => {
                     input_manager.handle_keyboard_event(input);
                 }
-
+                WindowEvent::CursorMoved { position, .. } => {
+                    input_manager.handle_mouse_event(position);
+                }
                 _ => {}
             },
             Event::RedrawRequested(_) => {
@@ -109,6 +111,8 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 input_manager.update();
 
                 transform_system(&mut scene.world);
+
+                input_manager.late_update();
 
                 gpu::render(
                     &context.device,

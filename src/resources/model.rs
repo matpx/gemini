@@ -12,8 +12,8 @@ fn load_node(
     context: &Context,
     scene: &mut Scene,
     node: &Node,
-    buffers: &Vec<gltf::buffer::Data>,
-    _images: &Vec<gltf::image::Data>,
+    buffers: &[gltf::buffer::Data],
+    _images: &[gltf::image::Data],
     parent: Option<Entity>,
 ) -> Result<Entity, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
