@@ -20,7 +20,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let mut scene = scene::Scene::new();
 
-    let vertex_data = [
+    /*let vertex_data = [
         Vertex {
             pos: [-0.5, 0.5, 0.0],
         },
@@ -44,13 +44,6 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         &index_data,
     ));
 
-    let material_id = scene.materials.insert(Material::new(
-        &context.device,
-        &context.global_bind_group_layout,
-        &context.local_bind_group_layout,
-        swapchain_format,
-    ));
-
     let player_parent = scene.world.push((
         TransformComponent::default(),
         MeshComponent { mesh_id: mesh },
@@ -63,9 +56,16 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
             parent: Some(player_parent),
             ..Default::default()
         },
+    ));*/
+
+    let material_id = scene.materials.insert(Material::new(
+        &context.device,
+        &context.global_bind_group_layout,
+        &context.local_bind_group_layout,
+        swapchain_format,
     ));
 
-    resources::load_gltf("assets/gltf/monkey.glb", &mut scene);
+    resources::load_gltf("assets/gltf/monkey.glb", &mut scene, &context);
 
     let camera = scene
         .world
@@ -88,14 +88,14 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     .create_swap_chain(&context.surface, &context.swap_chain_desc);
             }
             Event::RedrawRequested(_) => {
-                scene
-                    .world
-                    .entry(player_parent)
-                    .unwrap()
-                    .get_component_mut::<TransformComponent>()
-                    .unwrap()
-                    .translation
-                    .x += 0.001;
+                /*scene
+                .world
+                .entry(player_parent)
+                .unwrap()
+                .get_component_mut::<TransformComponent>()
+                .unwrap()
+                .translation
+                .x += 0.001;*/
 
                 transform_system(&mut scene.world);
 

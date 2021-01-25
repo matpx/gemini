@@ -13,8 +13,8 @@ impl Mesh {
     pub fn new(
         device: &Device,
         local_bind_group_layout: &BindGroupLayout,
-        vertex_data: &[Vertex; 4],
-        index_data: &[u16],
+        vertex_data: &[Vertex],
+        index_data: &[u32],
     ) -> Self {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
