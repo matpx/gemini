@@ -1,6 +1,6 @@
 use components::TransformComponent;
 use components::*;
-use gpu::{Context, Material, Mesh, Vertex};
+use gpu::{Context, Material};
 use systems::transform_system;
 use wgpu::TextureFormat;
 use winit::{
@@ -58,14 +58,14 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         },
     ));*/
 
-    let material_id = scene.materials.insert(Material::new(
+    scene.materials.insert(Material::new(
         &context.device,
         &context.global_bind_group_layout,
         &context.local_bind_group_layout,
         swapchain_format,
     ));
 
-    resources::load_gltf("assets/gltf/monkey.glb", &mut scene, &context);
+    resources::load_gltf("assets/gltf/monkey.glb", &mut scene, &context).unwrap();
 
     let camera = scene
         .world
