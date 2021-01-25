@@ -14,7 +14,19 @@ fn load_node(
     buffers: &Vec<gltf::buffer::Data>,
     _images: &Vec<gltf::image::Data>,
     context: &Context,
+    parent: Option<Entity>,
 ) -> Result<Entity, Box<dyn std::error::Error>> {
+    let gltf_transform = node.transform().decomposed();
+    let transform = TransformComponent {
+        translation: gltf_transform.0.into(),
+        rotation: gltf_transform.1.into(),
+        scale: gltf_transform.2.into(),
+        parent,
+        ..Default::default()
+    };
+
+    let entity;
+
     if let Some(mesh) = node.mesh() {
         let mut index_data: Vec<u32> = Vec::new();
         let mut vertex_data: Vec<Vertex> = Vec::new();
@@ -43,14 +55,20 @@ fn load_node(
 
         let mesh_id = scene.meshes.insert(mesh);
 
-        Ok(scene.world.push((
+        entity = scene.world.push((
             MeshComponent { mesh_id },
             MaterialComponent { material_id: 0 },
-            TransformComponent::default(),
-        )))
+            transform,
+        ));
     } else {
-        Ok(scene.world.push((TransformComponent::default(),)))
+        entity = scene.world.push((transform,));
     }
+
+    for child_node in node.children() {
+        load_node(&child_node, scene, buffers, _images, context, Some(entity))?;
+    }
+
+    Ok(entity)
 }
 
 pub fn load_gltf(
@@ -64,7 +82,7 @@ pub fn load_gltf(
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
-            load_node(&node, scene, &buffers, &images, context)?;
+            load_node(&node, scene, &buffers, &images, context, None)?;
         }
     }
 
