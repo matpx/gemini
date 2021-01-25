@@ -43,7 +43,7 @@ pub struct CameraComponent {
 impl Default for CameraComponent {
     fn default() -> Self {
         Self {
-            proj: glam::Mat4::perspective_lh(PI/4.0, 1.0, 0.1, 100.0),
+            proj: glam::Mat4::perspective_lh(PI / 4.0, 1.0, 0.1, 100.0),
         }
     }
 }

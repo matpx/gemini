@@ -1,6 +1,7 @@
 use components::TransformComponent;
 use components::*;
 use gpu::{Context, Material};
+use input::InputManager;
 use systems::transform_system;
 use wgpu::TextureFormat;
 use winit::{
@@ -11,6 +12,7 @@ use winit::{
 
 mod components;
 mod gpu;
+mod input;
 mod resources;
 mod scene;
 mod systems;
@@ -19,6 +21,8 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
     let mut context = Context::new(&window, swapchain_format).await;
 
     let mut scene = scene::Scene::new();
+
+    let mut input_manager = InputManager::new();
 
     /*let vertex_data = [
         Vertex {
@@ -77,16 +81,21 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
             Event::MainEventsCleared => {
                 window.request_redraw();
             }
-            Event::WindowEvent {
-                event: WindowEvent::Resized(size),
-                ..
-            } => {
-                context.swap_chain_desc.width = size.width;
-                context.swap_chain_desc.height = size.height;
-                context.swap_chain = context
-                    .device
-                    .create_swap_chain(&context.surface, &context.swap_chain_desc);
-            }
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                WindowEvent::Resized(size) => {
+                    context.swap_chain_desc.width = size.width;
+                    context.swap_chain_desc.height = size.height;
+                    context.swap_chain = context
+                        .device
+                        .create_swap_chain(&context.surface, &context.swap_chain_desc);
+                }
+                WindowEvent::KeyboardInput { input, .. } => {
+                    input_manager.handle_keyboard_event(input);
+                }
+
+                _ => {}
+            },
             Event::RedrawRequested(_) => {
                 /*scene
                 .world
@@ -96,6 +105,8 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 .unwrap()
                 .translation
                 .x += 0.001;*/
+
+                input_manager.update();
 
                 transform_system(&mut scene.world);
 
@@ -109,10 +120,6 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     camera,
                 );
             }
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => *control_flow = ControlFlow::Exit,
             _ => {}
         }
     });
