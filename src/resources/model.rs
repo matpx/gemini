@@ -9,11 +9,11 @@ use legion::Entity;
 use super::LoaderError;
 
 fn load_node(
-    node: &Node,
+    context: &Context,
     scene: &mut Scene,
+    node: &Node,
     buffers: &Vec<gltf::buffer::Data>,
     _images: &Vec<gltf::image::Data>,
-    context: &Context,
     parent: Option<Entity>,
 ) -> Result<Entity, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
@@ -65,16 +65,16 @@ fn load_node(
     }
 
     for child_node in node.children() {
-        load_node(&child_node, scene, buffers, _images, context, Some(entity))?;
+        load_node(context, scene, &child_node, buffers, _images, Some(entity))?;
     }
 
     Ok(entity)
 }
 
 pub fn load_gltf(
-    path: &str,
-    scene: &mut Scene,
     context: &Context,
+    scene: &mut Scene,
+    path: &str,
 ) -> Result<usize, Box<dyn std::error::Error>> {
     let (document, buffers, images) = gltf::import(path).unwrap();
     assert_eq!(buffers.len(), document.buffers().count());
@@ -82,7 +82,7 @@ pub fn load_gltf(
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
-            load_node(&node, scene, &buffers, &images, context, None)?;
+            load_node(context, scene, &node, &buffers, &images, None)?;
         }
     }
 

@@ -65,7 +65,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         swapchain_format,
     ));
 
-    resources::load_gltf("assets/gltf/monkey.glb", &mut scene, &context).unwrap();
+    resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
     let camera = scene
         .world
