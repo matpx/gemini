@@ -21,12 +21,10 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Rust Clippy
-      run |
+      run: |
         rustup component add clippy
         cargo clippy -- -D warnings
     - name: Rust Fmt
-      run |
+      run: |
         rustup component add rustfmt
         cargo fmt -- --check
-
-
