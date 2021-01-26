@@ -4,6 +4,7 @@ use crate::{
     scene::Scene,
 };
 use gltf::Node;
+use itertools::izip;
 use legion::Entity;
 
 use super::LoaderError;
@@ -36,13 +37,21 @@ fn load_node(
 
             let index_data_iter = reader.read_indices().ok_or(LoaderError)?;
             let vertex_data_iter = reader.read_positions().ok_or(LoaderError)?;
+            let uv_data_iter = reader.read_tex_coords(0).ok_or(LoaderError {})?;
+            let normal_data_iter = reader.read_normals().ok_or(LoaderError {})?;
 
             for index in index_data_iter.into_u32() {
                 index_data.push(index);
             }
 
-            for position in vertex_data_iter {
-                vertex_data.push(Vertex { pos: position });
+            for (position, uv, normal) in
+                izip!(vertex_data_iter, uv_data_iter.into_f32(), normal_data_iter)
+            {
+                vertex_data.push(Vertex {
+                    position,
+                    uv,
+                    normal,
+                });
             }
         }
 
