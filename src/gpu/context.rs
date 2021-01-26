@@ -1,7 +1,7 @@
-use super::{EntityUniform, GlobalUniform, DEPTH_FORMAT};
+use super::{EntityUniform, GlobalUniform, DEPTH_FORMAT, SWAPCHAIN_FORMAT};
 use wgpu::{
     util::DeviceExt, Adapter, BindGroup, BindGroupLayout, Buffer, Device, Instance, Queue, Surface,
-    SwapChain, SwapChainDescriptor, TextureFormat, TextureView,
+    SwapChain, SwapChainDescriptor, TextureView,
 };
 use winit::dpi::PhysicalSize;
 
@@ -23,7 +23,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub async fn new(window: &winit::window::Window, swap_chain_format: TextureFormat) -> Self {
+    pub async fn new(window: &winit::window::Window) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
         let surface = unsafe { instance.create_surface(window) };
@@ -49,7 +49,7 @@ impl Context {
 
         let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-            format: swap_chain_format,
+            format: SWAPCHAIN_FORMAT,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Mailbox,

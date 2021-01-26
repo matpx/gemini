@@ -1,5 +1,5 @@
-use super::{Vertex, DEPTH_FORMAT};
-use wgpu::{BindGroupLayout, Device, TextureFormat};
+use super::{Vertex, DEPTH_FORMAT, SWAPCHAIN_FORMAT};
+use wgpu::{BindGroupLayout, Device};
 
 pub struct Pipeline {
     pub pipeline: wgpu::RenderPipeline,
@@ -10,7 +10,6 @@ impl Pipeline {
         device: &Device,
         global_bind_group_layout: &BindGroupLayout,
         local_bind_group_layout: &BindGroupLayout,
-        swap_chain_format: TextureFormat,
     ) -> Self {
         let vs_module =
             device.create_shader_module(wgpu::include_spirv!("../shader/unlit.vert.spv"));
@@ -43,7 +42,7 @@ impl Pipeline {
                 clamp_depth: device.features().contains(wgpu::Features::DEPTH_CLAMPING),
             }),
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            color_states: &[swap_chain_format.into()],
+            color_states: &[SWAPCHAIN_FORMAT.into()],
             depth_stencil_state: Some(wgpu::DepthStencilStateDescriptor {
                 format: DEPTH_FORMAT,
                 depth_write_enabled: true,

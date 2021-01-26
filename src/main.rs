@@ -5,7 +5,6 @@ use input::InputManager;
 use legion::*;
 use std::f32::consts::PI;
 use systems::transform_system;
-use wgpu::TextureFormat;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -19,8 +18,8 @@ mod resources;
 mod scene;
 mod systems;
 
-async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: TextureFormat) {
-    let mut context = Context::new(&window, swapchain_format).await;
+async fn run(event_loop: EventLoop<()>, window: Window) {
+    let mut context = Context::new(&window).await;
 
     let mut scene = scene::Scene::new();
 
@@ -68,7 +67,6 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         &context.device,
         &context.global_bind_group_layout,
         &context.local_bind_group_layout,
-        swapchain_format,
     ));
 
     let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
@@ -136,7 +134,7 @@ fn main() {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        pollster::block_on(run(event_loop, window, wgpu::TextureFormat::Bgra8UnormSrgb));
+        pollster::block_on(run(event_loop, window));
     }
     #[cfg(target_arch = "wasm32")]
     {
@@ -151,6 +149,6 @@ fn main() {
                     .ok()
             })
             .expect("couldn't append canvas to document body");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window, wgpu::TextureFormat::Bgra8Unorm));
+        wasm_bindgen_futures::spawn_local(run(event_loop, window));
     }
 }

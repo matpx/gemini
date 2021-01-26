@@ -14,3 +14,9 @@ pub use uniform::GlobalUniform;
 pub use vertex::Vertex;
 
 pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub const SWAPCHAIN_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
+
+#[cfg(target_arch = "wasm32")]
+pub const SWAPCHAIN_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8Unorm;
