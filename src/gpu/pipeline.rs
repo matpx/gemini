@@ -34,8 +34,8 @@ impl Pipeline {
                 entry_point: "main",
             }),
             rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::Front,
+                front_face: wgpu::FrontFace::Cw,
+                cull_mode: wgpu::CullMode::Back,
                 depth_bias: 2,
                 depth_bias_slope_scale: 2.0,
                 depth_bias_clamp: 0.0,
