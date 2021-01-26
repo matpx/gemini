@@ -51,11 +51,10 @@ pub fn render(
             depth_stencil_attachment: None,
         });
 
-        for (transform, mesh, material) in
-            <(&TransformComponent, &MeshComponent, &MaterialComponent)>::query().iter(&scene.world)
+        for (transform, mesh) in <(&TransformComponent, &MeshComponent)>::query().iter(&scene.world)
         {
             let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
-            let gpu_material = scene.pipelines.get(material.material_id).unwrap();
+            let gpu_material = scene.pipelines.get(mesh.material_id).unwrap();
 
             queue.write_buffer(
                 &gpu_mesh.local_buffer,

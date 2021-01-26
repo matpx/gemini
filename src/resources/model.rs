@@ -1,6 +1,6 @@
 use crate::{
-    components::{MaterialComponent, MeshComponent, TransformComponent},
-    gpu::{Context, Mesh, Vertex},
+    components::{MeshComponent, TransformComponent},
+    gpu::{Context, Geometry, Vertex},
     scene::Scene,
 };
 use gltf::Node;
@@ -46,7 +46,7 @@ fn load_node(
             }
         }
 
-        let mesh = Mesh::new(
+        let mesh = Geometry::new(
             &context.device,
             &context.local_bind_group_layout,
             &vertex_data,
@@ -56,8 +56,10 @@ fn load_node(
         let mesh_id = scene.meshes.insert(mesh);
 
         entity = scene.world.push((
-            MeshComponent { mesh_id },
-            MaterialComponent { material_id: 0 },
+            MeshComponent {
+                mesh_id,
+                material_id: 0,
+            },
             transform,
         ));
     } else {

@@ -1,10 +1,10 @@
-use crate::gpu::{Mesh, Pipeline};
+use crate::gpu::{Geometry, Pipeline};
 use legion::World;
 use slab::Slab;
 
 #[derive(Default)]
 pub struct Scene {
-    pub meshes: Slab<Mesh>,
+    pub meshes: Slab<Geometry>,
     pub pipelines: Slab<Pipeline>,
 
     pub world: World,

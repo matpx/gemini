@@ -1,12 +1,12 @@
 mod context;
-mod mesh;
+mod geometry;
 mod pipeline;
 mod render;
 mod uniform;
 mod vertex;
 
 pub use context::Context;
-pub use mesh::Mesh;
+pub use geometry::Geometry;
 pub use pipeline::Pipeline;
 pub use render::render;
 pub use uniform::EntityUniform;

@@ -1,7 +1,7 @@
 use super::{EntityUniform, Vertex};
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Device};
 
-pub struct Mesh {
+pub struct Geometry {
     pub index_buffer: wgpu::Buffer,
     pub vertex_buffer: wgpu::Buffer,
     pub local_bind_group: wgpu::BindGroup,
@@ -9,7 +9,7 @@ pub struct Mesh {
     pub index_count: u32,
 }
 
-impl Mesh {
+impl Geometry {
     pub fn new(
         device: &Device,
         local_bind_group_layout: &BindGroupLayout,

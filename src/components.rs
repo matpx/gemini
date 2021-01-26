@@ -28,10 +28,6 @@ impl Default for TransformComponent {
 #[derive(Debug, Clone, Copy)]
 pub struct MeshComponent {
     pub mesh_id: usize,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct MaterialComponent {
     pub material_id: usize,
 }
 
