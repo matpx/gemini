@@ -76,7 +76,7 @@ pub fn load_gltf(
     scene: &mut Scene,
     path: &str,
 ) -> Result<Entity, Box<dyn std::error::Error>> {
-    let (document, buffers, images) = gltf::import(path).unwrap();
+    let (document, buffers, images) = gltf::import(path)?;
     assert_eq!(buffers.len(), document.buffers().count());
     assert_eq!(images.len(), document.images().count());
 
