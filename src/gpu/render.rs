@@ -55,7 +55,7 @@ pub fn render(
             <(&TransformComponent, &MeshComponent, &MaterialComponent)>::query().iter(&scene.world)
         {
             let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
-            let gpu_material = scene.materials.get(material.material_id).unwrap();
+            let gpu_material = scene.pipelines.get(material.material_id).unwrap();
 
             queue.write_buffer(
                 &gpu_mesh.local_buffer,

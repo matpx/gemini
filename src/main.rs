@@ -1,7 +1,9 @@
 use components::TransformComponent;
 use components::*;
-use gpu::{Context, Material};
+use gpu::{Context, Pipeline};
 use input::InputManager;
+use legion::*;
+use std::f32::consts::PI;
 use systems::transform_system;
 use wgpu::TextureFormat;
 use winit::{
@@ -62,7 +64,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         },
     ));*/
 
-    scene.materials.insert(Material::new(
+    scene.pipelines.insert(Pipeline::new(
         &context.device,
         &context.global_bind_group_layout,
         &context.local_bind_group_layout,
@@ -71,9 +73,15 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
     let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
-    let camera = scene
-        .world
-        .push((TransformComponent::default(), CameraComponent::default()));
+    let camera = scene.world.push((
+        TransformComponent::default(),
+        CameraComponent::new(
+            PI / 4.0,
+            context.size.width as f32 / context.size.height as f32,
+            0.1,
+            100.0,
+        ),
+    ));
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -84,11 +92,12 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
             Event::WindowEvent { event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 WindowEvent::Resized(size) => {
-                    context.swap_chain_desc.width = size.width;
-                    context.swap_chain_desc.height = size.height;
-                    context.swap_chain = context
-                        .device
-                        .create_swap_chain(&context.surface, &context.swap_chain_desc);
+                    context.resize(size);
+
+                    for camera in <&mut CameraComponent>::query().iter_mut(&mut scene.world) {
+                        camera.aspect = size.width as f32 / size.height as f32;
+                        camera.update_projection_matrix();
+                    }
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
                     input_manager.handle_keyboard_event(input);

@@ -3,8 +3,10 @@ use wgpu::{
     util::DeviceExt, Adapter, BindGroup, BindGroupLayout, Buffer, Device, Instance, Queue, Surface,
     SwapChain, SwapChainDescriptor, TextureFormat,
 };
+use winit::dpi::PhysicalSize;
 
 pub struct Context {
+    pub size: PhysicalSize<u32>,
     pub instance: Instance,
     pub surface: Surface,
     pub adapter: Adapter,
@@ -103,6 +105,7 @@ impl Context {
             });
 
         Context {
+            size,
             instance,
             surface,
             adapter,
@@ -115,5 +118,14 @@ impl Context {
             global_bind_group,
             global_uniform_buffer,
         }
+    }
+
+    pub fn resize(&mut self, size: PhysicalSize<u32>) {
+        self.size = size;
+        self.swap_chain_desc.width = size.width;
+        self.swap_chain_desc.height = size.height;
+        self.swap_chain = self
+            .device
+            .create_swap_chain(&self.surface, &self.swap_chain_desc);
     }
 }

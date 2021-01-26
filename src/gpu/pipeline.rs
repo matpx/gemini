@@ -2,11 +2,11 @@ use super::Vertex;
 
 use wgpu::{BindGroupLayout, Device, TextureFormat};
 
-pub struct Material {
+pub struct Pipeline {
     pub pipeline: wgpu::RenderPipeline,
 }
 
-impl Material {
+impl Pipeline {
     pub fn new(
         device: &Device,
         global_bind_group_layout: &BindGroupLayout,
