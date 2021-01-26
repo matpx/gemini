@@ -75,16 +75,18 @@ pub fn load_gltf(
     context: &Context,
     scene: &mut Scene,
     path: &str,
-) -> Result<usize, Box<dyn std::error::Error>> {
+) -> Result<Entity, Box<dyn std::error::Error>> {
     let (document, buffers, images) = gltf::import(path).unwrap();
     assert_eq!(buffers.len(), document.buffers().count());
     assert_eq!(images.len(), document.images().count());
 
+    let root_entity = scene.world.push((TransformComponent::default(),));
+
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
-            load_node(context, scene, &node, &buffers, &images, None)?;
+            load_node(context, scene, &node, &buffers, &images, Some(root_entity))?;
         }
     }
 
-    Ok(document.nodes().len())
+    Ok(root_entity)
 }

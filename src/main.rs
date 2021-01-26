@@ -69,7 +69,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         swapchain_format,
     ));
 
-    resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
+    let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
     let camera = scene
         .world
@@ -99,14 +99,14 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                 _ => {}
             },
             Event::RedrawRequested(_) => {
-                /*scene
-                .world
-                .entry(player_parent)
-                .unwrap()
-                .get_component_mut::<TransformComponent>()
-                .unwrap()
-                .translation
-                .x += 0.001;*/
+                scene
+                    .world
+                    .entry(test_model)
+                    .unwrap()
+                    .get_component_mut::<TransformComponent>()
+                    .unwrap()
+                    .translation
+                    .x += 0.001;
 
                 input_manager.update();
 

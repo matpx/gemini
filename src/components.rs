@@ -10,6 +10,7 @@ pub struct TransformComponent {
     pub local: glam::Mat4,
     pub world: glam::Mat4,
     pub parent: Option<Entity>,
+    pub needs_update: bool,
 }
 
 impl Default for TransformComponent {
@@ -21,6 +22,7 @@ impl Default for TransformComponent {
             local: glam::Mat4::identity(),
             world: glam::Mat4::identity(),
             parent: None,
+            needs_update: true,
         }
     }
 }
