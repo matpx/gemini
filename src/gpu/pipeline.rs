@@ -1,4 +1,4 @@
-use super::Vertex;
+use super::{Vertex, DEPTH_FORMAT};
 
 use wgpu::{BindGroupLayout, Device, TextureFormat};
 
@@ -37,12 +37,20 @@ impl Pipeline {
             }),
             rasterization_state: Some(wgpu::RasterizationStateDescriptor {
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::Back,
-                ..Default::default()
+                cull_mode: wgpu::CullMode::Front,
+                depth_bias: 2,
+                depth_bias_slope_scale: 2.0,
+                depth_bias_clamp: 0.0,
+                clamp_depth: device.features().contains(wgpu::Features::DEPTH_CLAMPING),
             }),
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             color_states: &[swap_chain_format.into()],
-            depth_stencil_state: None,
+            depth_stencil_state: Some(wgpu::DepthStencilStateDescriptor {
+                format: DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::LessEqual,
+                stencil: wgpu::StencilStateDescriptor::default(),
+            }),
             vertex_state: wgpu::VertexStateDescriptor {
                 index_format: wgpu::IndexFormat::Uint32,
                 vertex_buffers: &[wgpu::VertexBufferDescriptor {

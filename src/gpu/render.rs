@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::scene::Scene;
 use legion::*;
-use wgpu::{BindGroup, Buffer, Device, Queue, SwapChain};
+use wgpu::{BindGroup, Buffer, Device, Queue, SwapChain, TextureView};
 
 use super::{EntityUniform, GlobalUniform};
 
@@ -11,6 +11,7 @@ pub fn render(
     queue: &Queue,
     global_bind_group: &BindGroup,
     global_uniform_buffer: &Buffer,
+    depth_view: &TextureView,
     scene: &Scene,
     camera: Entity,
 ) {
@@ -48,7 +49,14 @@ pub fn render(
                     store: true,
                 },
             }],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachmentDescriptor {
+                attachment: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: false,
+                }),
+                stencil_ops: None,
+            }),
         });
 
         for (transform, mesh) in <(&TransformComponent, &MeshComponent)>::query().iter(&scene.world)

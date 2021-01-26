@@ -12,3 +12,5 @@ pub use render::render;
 pub use uniform::EntityUniform;
 pub use uniform::GlobalUniform;
 pub use vertex::Vertex;
+
+pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;

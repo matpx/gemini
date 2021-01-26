@@ -77,7 +77,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
         TransformComponent::default(),
         CameraComponent::new(
             PI / 4.0,
-            context.size.width as f32 / context.size.height as f32,
+            context.size().width as f32 / context.size().height as f32,
             0.1,
             100.0,
         ),
@@ -129,6 +129,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
                     &context.queue,
                     &context.global_bind_group,
                     &context.global_uniform_buffer,
+                    &context.depth_view,
                     &scene,
                     camera,
                 );

@@ -1,12 +1,12 @@
-use super::{EntityUniform, GlobalUniform};
+use super::{EntityUniform, GlobalUniform, DEPTH_FORMAT};
 use wgpu::{
     util::DeviceExt, Adapter, BindGroup, BindGroupLayout, Buffer, Device, Instance, Queue, Surface,
-    SwapChain, SwapChainDescriptor, TextureFormat,
+    SwapChain, SwapChainDescriptor, TextureFormat, TextureView,
 };
 use winit::dpi::PhysicalSize;
 
 pub struct Context {
-    pub size: PhysicalSize<u32>,
+    size: PhysicalSize<u32>,
     pub instance: Instance,
     pub surface: Surface,
     pub adapter: Adapter,
@@ -18,6 +18,8 @@ pub struct Context {
     pub global_bind_group_layout: BindGroupLayout,
     pub global_bind_group: BindGroup,
     pub global_uniform_buffer: Buffer,
+    //depth_texture: Texture,
+    pub depth_view: TextureView,
 }
 
 impl Context {
@@ -104,6 +106,22 @@ impl Context {
                 label: None,
             });
 
+        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width: size.width,
+                height: size.height,
+                depth: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: DEPTH_FORMAT,
+            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            label: None,
+        });
+
+        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
         Context {
             size,
             instance,
@@ -117,6 +135,8 @@ impl Context {
             global_bind_group_layout,
             global_bind_group,
             global_uniform_buffer,
+            //depth_texture,
+            depth_view,
         }
     }
 
@@ -127,5 +147,9 @@ impl Context {
         self.swap_chain = self
             .device
             .create_swap_chain(&self.surface, &self.swap_chain_desc);
+    }
+
+    pub fn size(&self) -> PhysicalSize<u32> {
+        self.size
     }
 }
