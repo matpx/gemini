@@ -123,16 +123,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, swapchain_format: Textur
 
                 input_manager.late_update();
 
-                gpu::render(
-                    &context.device,
-                    &mut context.swap_chain,
-                    &context.queue,
-                    &context.global_bind_group,
-                    &context.global_uniform_buffer,
-                    &context.depth_view,
-                    &scene,
-                    camera,
-                );
+                gpu::render(&mut context, &scene, camera);
             }
             _ => {}
         }

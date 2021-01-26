@@ -1,5 +1,4 @@
 use super::{Vertex, DEPTH_FORMAT};
-
 use wgpu::{BindGroupLayout, Device, TextureFormat};
 
 pub struct Pipeline {
