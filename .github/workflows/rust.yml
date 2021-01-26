@@ -21,8 +21,12 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Rust Clippy
-      uses: actions-rs/clippy-check@v1.0.7
+      run |
+        rustup component add clippy
+        cargo clippy -- -D warnings
     - name: Rust Fmt
-      uses: mbrobbel/rustfmt-check@0.3.0
+      run |
+        rustup component add rustfmt
+        cargo fmt -- --check
 
 
