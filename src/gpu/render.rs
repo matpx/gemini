@@ -11,8 +11,8 @@ pub fn render(
     camera: usize,
 ) {
     let view_proj = {
-        let camera_transform = scene.components.transforms.get(&camera).unwrap();
-        let camera_comp = scene.components.cameras.get(&camera).unwrap();
+        let camera_transform = scene.components.transforms.get(camera).unwrap();
+        let camera_comp = scene.components.cameras.get(camera).unwrap();
 
         let proj = camera_comp.proj;
         let view = camera_transform.world.inverse();
@@ -52,10 +52,10 @@ pub fn render(
             }),
         });
 
-        for mesh in &scene.components.meshes {
-            if let Some(transform) = scene.components.transforms.get(&mesh.0) {
-                let geometry = scene.geometries.get(mesh.1.mesh_id).unwrap();
-                let pipeline = scene.pipelines.get(mesh.1.material_id).unwrap();
+        for (entitiy_id, mesh) in scene.components.meshes.iter().enumerate() {
+            if let Some(transform) = scene.components.transforms.get(entitiy_id) {
+                let geometry = scene.geometries.get(mesh.mesh_id).unwrap();
+                let pipeline = scene.pipelines.get(mesh.material_id).unwrap();
 
                 queue.write_buffer(
                     &geometry.local_buffer,

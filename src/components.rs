@@ -21,13 +21,13 @@ impl Default for TransformComponent {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct MeshComponent {
     pub mesh_id: usize,
     pub material_id: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct CameraComponent {
     pub fov: f32,
     pub aspect: f32,

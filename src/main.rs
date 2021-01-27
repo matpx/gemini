@@ -67,9 +67,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 WindowEvent::Resized(size) => {
                     context.resize(size);
 
-                    for camera in &mut scene.components.cameras {
-                        camera.1.aspect = size.width as f32 / size.height as f32;
-                        camera.1.update_projection_matrix();
+                    for camera in scene.components.cameras.iter_mut() {
+                        camera.aspect = size.width as f32 / size.height as f32;
+                        camera.update_projection_matrix();
                     }
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
@@ -84,7 +84,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 scene
                     .components
                     .transforms
-                    .get_mut(&(test_model))
+                    .get_mut(test_model)
                     .unwrap()
                     .translation
                     .x += 0.001;

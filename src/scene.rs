@@ -3,13 +3,54 @@ use crate::{
     gpu::{Geometry, Pipeline},
 };
 use slab::Slab;
-use std::{collections::HashMap, usize};
+use std::usize;
+
+pub type Entity = usize;
+
+#[derive(Default)]
+pub struct Storage<T: Copy + Default> {
+    data: Vec<T>,
+}
+
+impl<T: Copy + Default> Storage<T> {
+    pub fn insert(&mut self, entity_id: Entity, value: T) {
+        if self.data.len() < entity_id + 1 {
+            self.data.resize(entity_id + 1, Default::default());
+
+            self.data[entity_id] = value;
+        }
+    }
+
+    pub fn get(&self, entity_id: Entity) -> Option<&T> {
+        if entity_id < self.data.len() {
+            return Some(&self.data[entity_id]);
+        }
+
+        None
+    }
+
+    pub fn get_mut(&mut self, entity_id: Entity) -> Option<&mut T> {
+        if entity_id < self.data.len() {
+            return Some(&mut self.data[entity_id]);
+        }
+
+        None
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+        self.data.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+        self.data.iter_mut()
+    }
+}
 
 #[derive(Default)]
 pub struct Components {
-    pub meshes: HashMap<usize, MeshComponent>,
-    pub transforms: HashMap<usize, TransformComponent>,
-    pub cameras: HashMap<usize, CameraComponent>,
+    pub meshes: Storage<MeshComponent>,
+    pub transforms: Storage<TransformComponent>,
+    pub cameras: Storage<CameraComponent>,
 }
 
 #[derive(Default)]

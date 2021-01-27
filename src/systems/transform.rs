@@ -4,9 +4,9 @@ pub struct TransformSystem;
 
 impl TransformSystem {
     pub fn update(scene: &mut Scene) {
-        for transform_entry in &scene.components.transforms {
+        for transform_entry in scene.components.transforms.iter() {
             let transform =
-                (transform_entry.1 as *const TransformComponent) as *mut TransformComponent;
+                (transform_entry as *const TransformComponent) as *mut TransformComponent;
 
             unsafe {
                 (*transform).local = glam::Mat4::from_scale_rotation_translation(
@@ -16,7 +16,7 @@ impl TransformSystem {
                 );
 
                 if let Some(parent_id) = (*transform).parent {
-                    if let Some(parent_transform) = scene.components.transforms.get(&parent_id) {
+                    if let Some(parent_transform) = scene.components.transforms.get(parent_id) {
                         (*transform).world = parent_transform.world.mul_mat4(&(*transform).local);
                     } else {
                         (*transform).parent = None;
