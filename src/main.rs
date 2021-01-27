@@ -16,6 +16,7 @@ mod gpu;
 mod input;
 mod resources;
 mod scene;
+mod shapes;
 mod systems;
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
@@ -24,44 +25,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut scene = scene::Scene::new();
 
     let mut input_manager = InputManager::new();
-
-    /*let vertex_data = [
-        Vertex {
-            pos: [-0.5, 0.5, 0.0],
-        },
-        Vertex {
-            pos: [0.5, 0.5, 0.0],
-        },
-        Vertex {
-            pos: [0.5, -0.5, 0.0],
-        },
-        Vertex {
-            pos: [-0.5, -0.5, 0.0],
-        },
-    ];
-
-    let index_data: &[u16] = &[2, 1, 0, 0, 3, 2];
-
-    let mesh = scene.meshes.insert(Mesh::new(
-        &context.device,
-        &context.local_bind_group_layout,
-        &vertex_data,
-        &index_data,
-    ));
-
-    let player_parent = scene.world.push((
-        TransformComponent::default(),
-        MeshComponent { mesh_id: mesh },
-    ));
-
-    scene.world.push((
-        MeshComponent { mesh_id: mesh },
-        MaterialComponent { material_id },
-        TransformComponent {
-            parent: Some(player_parent),
-            ..Default::default()
-        },
-    ));*/
 
     scene.pipelines.insert(Pipeline::new(
         &context.device,
