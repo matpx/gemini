@@ -1,7 +1,5 @@
 use super::{EntityUniform, GlobalUniform, UniformContext};
-use crate::components::*;
 use crate::scene::Scene;
-use legion::*;
 use wgpu::{Device, Queue, SwapChain};
 
 pub fn render(
@@ -10,13 +8,11 @@ pub fn render(
     swap_chain: &mut SwapChain,
     uniforms: &UniformContext,
     scene: &Scene,
-    camera: Entity,
+    camera: usize,
 ) {
     let view_proj = {
-        let camera_entry = scene.world.entry_ref(camera).unwrap();
-
-        let camera_transform = camera_entry.get_component::<TransformComponent>().unwrap();
-        let camera_comp = camera_entry.get_component::<CameraComponent>().unwrap();
+        let camera_transform = scene.components.transforms.get(&camera).unwrap();
+        let camera_comp = scene.components.cameras.get(&camera).unwrap();
 
         let proj = camera_comp.proj;
         let view = camera_transform.world.inverse();
@@ -56,25 +52,26 @@ pub fn render(
             }),
         });
 
-        for (transform, mesh) in <(&TransformComponent, &MeshComponent)>::query().iter(&scene.world)
-        {
-            let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
-            let gpu_material = scene.pipelines.get(mesh.material_id).unwrap();
+        for mesh in &scene.components.meshes {
+            if let Some(transform) = scene.components.transforms.get(&mesh.0) {
+                let geometry = scene.geometries.get(mesh.1.mesh_id).unwrap();
+                let pipeline = scene.pipelines.get(mesh.1.material_id).unwrap();
 
-            queue.write_buffer(
-                &gpu_mesh.local_buffer,
-                0,
-                bytemuck::bytes_of(&EntityUniform {
-                    model: transform.world,
-                }),
-            );
+                queue.write_buffer(
+                    &geometry.local_buffer,
+                    0,
+                    bytemuck::bytes_of(&EntityUniform {
+                        model: transform.world,
+                    }),
+                );
 
-            rpass.set_pipeline(&gpu_material.pipeline);
-            rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
-            rpass.set_bind_group(1, &gpu_mesh.local_bind_group, &[]);
-            rpass.set_index_buffer(gpu_mesh.index_buffer.slice(..));
-            rpass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
-            rpass.draw_indexed(0..gpu_mesh.index_count, 0, 0..1);
+                rpass.set_pipeline(&pipeline.pipeline);
+                rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
+                rpass.set_bind_group(1, &geometry.local_bind_group, &[]);
+                rpass.set_index_buffer(geometry.index_buffer.slice(..));
+                rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
+                rpass.draw_indexed(0..geometry.index_count, 0, 0..1);
+            }
         }
     }
 

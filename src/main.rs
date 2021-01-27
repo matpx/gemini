@@ -2,7 +2,6 @@ use components::TransformComponent;
 use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
-use legion::*;
 use std::f32::consts::PI;
 use systems::TransformSystem;
 use winit::{
@@ -40,15 +39,22 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     )
     .unwrap();
 
-    let camera = scene.world.push((
-        TransformComponent::default(),
+    let camera = scene.create_entity();
+
+    scene
+        .components
+        .transforms
+        .insert(camera, TransformComponent::default());
+
+    scene.components.cameras.insert(
+        camera,
         CameraComponent::new(
             PI / 4.0,
             context.size().width as f32 / context.size().height as f32,
             0.1,
             100.0,
         ),
-    ));
+    );
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -61,9 +67,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 WindowEvent::Resized(size) => {
                     context.resize(size);
 
-                    for camera in <&mut CameraComponent>::query().iter_mut(&mut scene.world) {
-                        camera.aspect = size.width as f32 / size.height as f32;
-                        camera.update_projection_matrix();
+                    for camera in &mut scene.components.cameras {
+                        camera.1.aspect = size.width as f32 / size.height as f32;
+                        camera.1.update_projection_matrix();
                     }
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
@@ -76,17 +82,16 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             },
             Event::RedrawRequested(_) => {
                 scene
-                    .world
-                    .entry(test_model)
-                    .unwrap()
-                    .get_component_mut::<TransformComponent>()
+                    .components
+                    .transforms
+                    .get_mut(&(test_model))
                     .unwrap()
                     .translation
                     .x += 0.001;
 
                 input_manager.update();
 
-                TransformSystem::update(&mut scene.world);
+                TransformSystem::update(&mut scene);
 
                 input_manager.late_update();
 

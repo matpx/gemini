@@ -1,5 +1,3 @@
-use legion::Entity;
-
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
     pub translation: glam::Vec3,
@@ -7,8 +5,7 @@ pub struct TransformComponent {
     pub rotation: glam::Quat,
     pub local: glam::Mat4,
     pub world: glam::Mat4,
-    pub parent: Option<Entity>,
-    pub needs_update: bool,
+    pub parent: Option<usize>,
 }
 
 impl Default for TransformComponent {
@@ -20,7 +17,6 @@ impl Default for TransformComponent {
             local: glam::Mat4::identity(),
             world: glam::Mat4::identity(),
             parent: None,
-            needs_update: true,
         }
     }
 }
