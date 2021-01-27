@@ -52,7 +52,7 @@ pub fn render(
             }),
         });
 
-        for (entitiy_id, mesh) in scene.components.meshes.iter().enumerate() {
+        for (entitiy_id, mesh) in scene.components.meshes.iter() {
             if let Some(transform) = scene.components.transforms.get(entitiy_id) {
                 let geometry = scene.geometries.get(mesh.mesh_id).unwrap();
                 let pipeline = scene.pipelines.get(mesh.material_id).unwrap();

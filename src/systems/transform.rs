@@ -4,7 +4,7 @@ pub struct TransformSystem;
 
 impl TransformSystem {
     pub fn update(scene: &mut Scene) {
-        for transform_entry in scene.components.transforms.iter() {
+        for (_, transform_entry) in scene.components.transforms.iter() {
             let transform =
                 (transform_entry as *const TransformComponent) as *mut TransformComponent;
 

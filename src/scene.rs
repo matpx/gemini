@@ -9,21 +9,23 @@ pub type Entity = usize;
 
 #[derive(Default)]
 pub struct Storage<T: Copy + Default> {
-    data: Vec<T>,
+    data: Vec<Option<T>>,
 }
 
-impl<T: Copy + Default> Storage<T> {
+impl<'a, T: Copy + Default> Storage<T> {
     pub fn insert(&mut self, entity_id: Entity, value: T) {
         if self.data.len() < entity_id + 1 {
-            self.data.resize(entity_id + 1, Default::default());
+            self.data.resize(entity_id + 1, None);
 
-            self.data[entity_id] = value;
+            self.data[entity_id] = Some(value);
         }
     }
 
     pub fn get(&self, entity_id: Entity) -> Option<&T> {
         if entity_id < self.data.len() {
-            return Some(&self.data[entity_id]);
+            if let Some(value) = &self.data[entity_id] {
+                return Some(value);
+            }
         }
 
         None
@@ -31,18 +33,78 @@ impl<T: Copy + Default> Storage<T> {
 
     pub fn get_mut(&mut self, entity_id: Entity) -> Option<&mut T> {
         if entity_id < self.data.len() {
-            return Some(&mut self.data[entity_id]);
+            if let Some(value) = &mut self.data[entity_id] {
+                return Some(value);
+            }
         }
 
         None
     }
 
-    pub fn iter(&self) -> std::slice::Iter<'_, T> {
-        self.data.iter()
+    pub fn iter(&self) -> StorageIterator<'_, T> {
+        StorageIterator {
+            storage: self,
+            index: 0,
+        }
     }
 
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
-        self.data.iter_mut()
+    pub fn iter_mut(&mut self) -> StorageIteratorMut<'_, T> {
+        StorageIteratorMut {
+            storage: self,
+            index: 0,
+        }
+    }
+}
+
+pub struct StorageIterator<'a, T: Copy + Default> {
+    storage: &'a Storage<T>,
+    index: usize,
+}
+
+impl<'a, T: Copy + Default + 'a> Iterator for StorageIterator<'a, T> {
+    type Item = (usize, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.index >= self.storage.data.len() {
+                return None;
+            }
+
+            let index = self.index;
+
+            self.index += 1;
+
+            if let Some(item) = &self.storage.data[index] {
+                return Some((index, item));
+            }
+        }
+    }
+}
+
+pub struct StorageIteratorMut<'a, T: Copy + Default> {
+    storage: &'a mut Storage<T>,
+    index: usize,
+}
+
+impl<'a, T: Copy + Default + 'a> Iterator for StorageIteratorMut<'a, T> {
+    type Item = (usize, &'a mut T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if self.index >= self.storage.data.len() {
+                return None;
+            }
+
+            let index = self.index;
+
+            self.index += 1;
+
+            if let Some(item) = &self.storage.data[index] {
+                unsafe {
+                    return Some((index, &mut *((item as *const T) as *mut T)));
+                }
+            }
+        }
     }
 }
 
