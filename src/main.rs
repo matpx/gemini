@@ -65,11 +65,17 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     scene.pipelines.insert(Pipeline::new(
         &context.device,
-        &context.global_bind_group_layout,
-        &context.local_bind_group_layout,
+        &context.uniforms.global_bind_group_layout,
+        &context.uniforms.local_bind_group_layout,
     ));
 
-    let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
+    let test_model = resources::load_gltf(
+        &context.device,
+        &context.uniforms,
+        &mut scene,
+        "assets/gltf/monkey.glb",
+    )
+    .unwrap();
 
     let camera = scene.world.push((
         TransformComponent::default(),
@@ -121,7 +127,14 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                 input_manager.late_update();
 
-                gpu::render(&mut context, &scene, camera);
+                gpu::render(
+                    &context.device,
+                    &context.queue,
+                    &mut context.swap_chain,
+                    &context.uniforms,
+                    &scene,
+                    camera,
+                );
             }
             _ => {}
         }

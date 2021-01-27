@@ -1,16 +1,18 @@
 use crate::{
     components::{MeshComponent, TransformComponent},
-    gpu::{Context, Geometry, Vertex},
+    gpu::{Geometry, UniformContext, Vertex},
     scene::Scene,
 };
 use gltf::Node;
 use itertools::izip;
 use legion::Entity;
+use wgpu::Device;
 
 use super::LoaderError;
 
 fn load_node(
-    context: &Context,
+    device: &Device,
+    uniforms: &UniformContext,
     scene: &mut Scene,
     node: &Node,
     buffers: &[gltf::buffer::Data],
@@ -56,8 +58,8 @@ fn load_node(
         }
 
         let mesh = Geometry::new(
-            &context.device,
-            &context.local_bind_group_layout,
+            &device,
+            &uniforms.local_bind_group_layout,
             &vertex_data,
             &index_data,
         );
@@ -76,14 +78,23 @@ fn load_node(
     }
 
     for child_node in node.children() {
-        load_node(context, scene, &child_node, buffers, _images, Some(entity))?;
+        load_node(
+            device,
+            uniforms,
+            scene,
+            &child_node,
+            buffers,
+            _images,
+            Some(entity),
+        )?;
     }
 
     Ok(entity)
 }
 
 pub fn load_gltf(
-    context: &Context,
+    device: &Device,
+    uniforms: &UniformContext,
     scene: &mut Scene,
     path: &str,
 ) -> Result<Entity, Box<dyn std::error::Error>> {
@@ -95,7 +106,15 @@ pub fn load_gltf(
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
-            load_node(context, scene, &node, &buffers, &images, Some(root_entity))?;
+            load_node(
+                device,
+                uniforms,
+                scene,
+                &node,
+                &buffers,
+                &images,
+                Some(root_entity),
+            )?;
         }
     }
 

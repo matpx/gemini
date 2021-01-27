@@ -1,7 +1,8 @@
-use super::{EntityUniform, GlobalUniform, DEPTH_FORMAT, SWAPCHAIN_FORMAT};
+use super::{
+    uniform::UniformContext, EntityUniform, GlobalUniform, DEPTH_FORMAT, SWAPCHAIN_FORMAT,
+};
 use wgpu::{
-    util::DeviceExt, Adapter, BindGroup, BindGroupLayout, Buffer, Device, Instance, Queue, Surface,
-    SwapChain, SwapChainDescriptor, TextureView,
+    util::DeviceExt, Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor,
 };
 use winit::dpi::PhysicalSize;
 
@@ -14,12 +15,7 @@ pub struct Context {
     pub queue: Queue,
     pub swap_chain_desc: SwapChainDescriptor,
     pub swap_chain: SwapChain,
-    pub local_bind_group_layout: BindGroupLayout,
-    pub global_bind_group_layout: BindGroupLayout,
-    pub global_bind_group: BindGroup,
-    pub global_uniform_buffer: Buffer,
-    //depth_texture: Texture,
-    pub depth_view: TextureView,
+    pub uniforms: UniformContext,
 }
 
 impl Context {
@@ -122,6 +118,14 @@ impl Context {
 
         let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
+        let uniforms = UniformContext {
+            local_bind_group_layout,
+            global_bind_group_layout,
+            global_bind_group,
+            global_uniform_buffer,
+            depth_view,
+        };
+
         Context {
             size,
             instance,
@@ -131,12 +135,7 @@ impl Context {
             queue,
             swap_chain_desc,
             swap_chain,
-            local_bind_group_layout,
-            global_bind_group_layout,
-            global_bind_group,
-            global_uniform_buffer,
-            //depth_texture,
-            depth_view,
+            uniforms,
         }
     }
 
@@ -162,7 +161,8 @@ impl Context {
             label: None,
         });
 
-        self.depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        self.uniforms.depth_view =
+            depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
     }
 
     pub fn size(&self) -> PhysicalSize<u32> {

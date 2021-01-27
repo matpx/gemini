@@ -1,9 +1,17 @@
-use super::{Context, EntityUniform, GlobalUniform};
+use super::{EntityUniform, GlobalUniform, UniformContext};
 use crate::components::*;
 use crate::scene::Scene;
 use legion::*;
+use wgpu::{Device, Queue, SwapChain};
 
-pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
+pub fn render(
+    device: &Device,
+    queue: &Queue,
+    swap_chain: &mut SwapChain,
+    uniforms: &UniformContext,
+    scene: &Scene,
+    camera: Entity,
+) {
     let view_proj = {
         let camera_entry = scene.world.entry_ref(camera).unwrap();
 
@@ -16,20 +24,18 @@ pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
         proj.mul_mat4(&view)
     };
 
-    context.queue.write_buffer(
-        &context.global_uniform_buffer,
+    queue.write_buffer(
+        &uniforms.global_uniform_buffer,
         0,
         bytemuck::bytes_of(&GlobalUniform { view_proj }),
     );
 
-    let frame = context
-        .swap_chain
+    let frame = swap_chain
         .get_current_frame()
         .expect("Failed to acquire next swap chain texture")
         .output;
-    let mut encoder = context
-        .device
-        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+    let mut encoder =
+        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     {
         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
@@ -41,7 +47,7 @@ pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
                 },
             }],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachmentDescriptor {
-                attachment: &context.depth_view,
+                attachment: &uniforms.depth_view,
                 depth_ops: Some(wgpu::Operations {
                     load: wgpu::LoadOp::Clear(1.0),
                     store: false,
@@ -55,7 +61,7 @@ pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
             let gpu_mesh = scene.meshes.get(mesh.mesh_id).unwrap();
             let gpu_material = scene.pipelines.get(mesh.material_id).unwrap();
 
-            context.queue.write_buffer(
+            queue.write_buffer(
                 &gpu_mesh.local_buffer,
                 0,
                 bytemuck::bytes_of(&EntityUniform {
@@ -64,7 +70,7 @@ pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
             );
 
             rpass.set_pipeline(&gpu_material.pipeline);
-            rpass.set_bind_group(0, &context.global_bind_group, &[]);
+            rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
             rpass.set_bind_group(1, &gpu_mesh.local_bind_group, &[]);
             rpass.set_index_buffer(gpu_mesh.index_buffer.slice(..));
             rpass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
@@ -72,5 +78,5 @@ pub fn render(context: &mut Context, scene: &Scene, camera: Entity) {
         }
     }
 
-    context.queue.submit(Some(encoder.finish()));
+    queue.submit(Some(encoder.finish()));
 }
