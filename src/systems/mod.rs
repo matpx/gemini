@@ -1,3 +1,3 @@
 mod transform;
 
-pub use transform::transform_system;
+pub use transform::TransformSystem;

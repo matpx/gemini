@@ -4,7 +4,7 @@ use gpu::{Context, Pipeline};
 use input::InputManager;
 use legion::*;
 use std::f32::consts::PI;
-use systems::transform_system;
+use systems::TransformSystem;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -86,7 +86,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                 input_manager.update();
 
-                transform_system(&mut scene.world);
+                TransformSystem::update(&mut scene.world);
 
                 input_manager.late_update();
 
