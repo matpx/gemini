@@ -1,3 +1,5 @@
+use slotmap::DefaultKey;
+
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
     pub translation: glam::Vec3,
@@ -5,7 +7,7 @@ pub struct TransformComponent {
     pub rotation: glam::Quat,
     pub local: glam::Mat4,
     pub world: glam::Mat4,
-    pub parent: Option<usize>,
+    pub parent: Option<DefaultKey>,
 }
 
 impl Default for TransformComponent {

@@ -1,5 +1,6 @@
 use super::{EntityUniform, GlobalUniform, UniformContext};
 use crate::scene::Scene;
+use slotmap::DefaultKey;
 use wgpu::{Device, Queue, SwapChain};
 
 pub fn render(
@@ -8,7 +9,7 @@ pub fn render(
     swap_chain: &mut SwapChain,
     uniforms: &UniformContext,
     scene: &Scene,
-    camera: usize,
+    camera: DefaultKey,
 ) {
     let view_proj = {
         let camera_transform = scene.components.transforms.get(camera).unwrap();

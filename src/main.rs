@@ -39,12 +39,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     )
     .unwrap();
 
-    let camera = scene.create_entity();
-
-    scene
-        .components
-        .transforms
-        .insert(camera, TransformComponent::default());
+    let camera = scene.create_entity(TransformComponent::default());
 
     scene.components.cameras.insert(
         camera,

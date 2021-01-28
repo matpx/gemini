@@ -5,6 +5,7 @@ use crate::{
 };
 use gltf::Node;
 use itertools::izip;
+use slotmap::DefaultKey;
 use wgpu::Device;
 
 use super::LoaderError;
@@ -16,8 +17,8 @@ fn load_node(
     node: &Node,
     buffers: &[gltf::buffer::Data],
     _images: &[gltf::image::Data],
-    parent: Option<usize>,
-) -> Result<usize, Box<dyn std::error::Error>> {
+    parent: Option<DefaultKey>,
+) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
     let transform = TransformComponent {
         translation: gltf_transform.0.into(),
@@ -65,9 +66,7 @@ fn load_node(
 
         let mesh_id = scene.geometries.insert(mesh);
 
-        entity = scene.create_entity();
-
-        scene.components.transforms.insert(entity, transform);
+        entity = scene.create_entity(transform);
 
         scene.components.meshes.insert(
             entity,
@@ -77,9 +76,7 @@ fn load_node(
             },
         );
     } else {
-        entity = scene.create_entity();
-
-        scene.components.transforms.insert(entity, transform);
+        entity = scene.create_entity(transform);
     }
 
     for child_node in node.children() {
@@ -102,17 +99,12 @@ pub fn load_gltf(
     uniforms: &UniformContext,
     scene: &mut Scene,
     path: &str,
-) -> Result<usize, Box<dyn std::error::Error>> {
+) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let (document, buffers, images) = gltf::import(path)?;
     assert_eq!(buffers.len(), document.buffers().count());
     assert_eq!(images.len(), document.images().count());
 
-    let root_entity = scene.create_entity();
-
-    scene
-        .components
-        .transforms
-        .insert(root_entity, TransformComponent::default());
+    let root_entity = scene.create_entity(TransformComponent::default());
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
