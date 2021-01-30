@@ -59,7 +59,7 @@ pub fn render(
                 let pipeline = scene.pipelines.get(mesh.pipeline_id).unwrap();
 
                 queue.write_buffer(
-                    &geometry.local_buffer,
+                    &mesh.local_buffer,
                     0,
                     bytemuck::bytes_of(&EntityUniform {
                         model: transform.world,
@@ -68,7 +68,7 @@ pub fn render(
 
                 rpass.set_pipeline(&pipeline.pipeline);
                 rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
-                rpass.set_bind_group(1, &geometry.local_bind_group, &[]);
+                rpass.set_bind_group(1, &mesh.local_bind_group, &[]);
                 rpass.set_index_buffer(geometry.index_buffer.slice(..));
                 rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
                 rpass.draw_indexed(0..geometry.index_count, 0, 0..1);

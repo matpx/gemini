@@ -1,7 +1,7 @@
 use crate::gpu::{Geometry, Vertex};
-use wgpu::{BindGroupLayout, Device};
+use wgpu::Device;
 
-pub fn _generate_quad(device: &Device, local_bind_group_layout: &BindGroupLayout) -> Geometry {
+pub fn _generate_quad(device: &Device) -> Geometry {
     let vertex_data = [
         Vertex {
             position: [-1.0, 1.0, 0.0],
@@ -27,5 +27,5 @@ pub fn _generate_quad(device: &Device, local_bind_group_layout: &BindGroupLayout
 
     let index_data: &[u32] = &[0, 1, 2, 2, 3, 0];
 
-    Geometry::new(device, local_bind_group_layout, &vertex_data, index_data)
+    Geometry::new(device, &vertex_data, index_data)
 }

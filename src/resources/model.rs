@@ -1,5 +1,3 @@
-use std::collections::{hash_map::Entry, HashMap};
-
 use crate::{
     components::{MeshComponent, TransformComponent},
     gpu::{Geometry, UniformContext, Vertex},
@@ -8,6 +6,7 @@ use crate::{
 use gltf::Node;
 use itertools::izip;
 use slotmap::DefaultKey;
+use std::collections::{hash_map::Entry, HashMap};
 use wgpu::Device;
 
 use super::LoaderError;
@@ -63,12 +62,7 @@ fn load_node(
                     }
                 }
 
-                let geometry = Geometry::new(
-                    &device,
-                    &uniforms.local_bind_group_layout,
-                    &vertex_data,
-                    &index_data,
-                );
+                let geometry = Geometry::new(&device, &vertex_data, &index_data);
 
                 let id = scene.geometries.insert(geometry);
 
@@ -82,10 +76,7 @@ fn load_node(
 
         scene.components.meshes.insert(
             entity,
-            MeshComponent {
-                geometry_id,
-                pipeline_id: 0,
-            },
+            MeshComponent::new(&device, &uniforms.local_bind_group_layout, geometry_id, 0),
         );
     } else {
         entity = scene.create_entity(transform);

@@ -1,4 +1,7 @@
 use slotmap::DefaultKey;
+use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
+
+use crate::gpu::EntityUniform;
 
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
@@ -23,10 +26,45 @@ impl Default for TransformComponent {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct MeshComponent {
     pub geometry_id: usize,
     pub pipeline_id: usize,
+    pub local_buffer: Buffer,
+    pub local_bind_group: BindGroup,
+}
+
+impl MeshComponent {
+    pub fn new(
+        device: &Device,
+        local_bind_group_layout: &BindGroupLayout,
+        geometry_id: usize,
+        pipeline_id: usize,
+    ) -> Self {
+        let local_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: bytemuck::bytes_of(&EntityUniform {
+                model: glam::Mat4::identity(),
+            }),
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        });
+
+        let local_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &local_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer(local_buffer.slice(..)),
+            }],
+            label: None,
+        });
+
+        MeshComponent {
+            geometry_id,
+            pipeline_id,
+            local_buffer,
+            local_bind_group,
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy)]

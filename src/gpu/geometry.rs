@@ -1,21 +1,14 @@
-use super::{EntityUniform, Vertex};
-use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Device};
+use super::Vertex;
+use wgpu::{util::DeviceExt, Device};
 
 pub struct Geometry {
     pub index_buffer: wgpu::Buffer,
     pub vertex_buffer: wgpu::Buffer,
-    pub local_bind_group: wgpu::BindGroup,
-    pub local_buffer: Buffer,
     pub index_count: u32,
 }
 
 impl Geometry {
-    pub fn new(
-        device: &Device,
-        local_bind_group_layout: &BindGroupLayout,
-        vertex_data: &[Vertex],
-        index_data: &[u32],
-    ) -> Self {
+    pub fn new(device: &Device, vertex_data: &[Vertex], index_data: &[u32]) -> Self {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(vertex_data),
@@ -28,28 +21,9 @@ impl Geometry {
             usage: wgpu::BufferUsage::INDEX,
         });
 
-        let local_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
-            contents: bytemuck::bytes_of(&EntityUniform {
-                model: glam::Mat4::identity(),
-            }),
-            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-        });
-
-        let local_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &local_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(local_buffer.slice(..)),
-            }],
-            label: None,
-        });
-
         Self {
             vertex_buffer,
             index_buffer,
-            local_bind_group,
-            local_buffer,
             index_count: index_data.len() as u32,
         }
     }
