@@ -46,6 +46,5 @@ impl TransformSystem {
 
             true
         });
-
     }
 }

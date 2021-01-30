@@ -25,8 +25,8 @@ impl Default for TransformComponent {
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MeshComponent {
-    pub mesh_id: usize,
-    pub material_id: usize,
+    pub geometry_id: usize,
+    pub pipeline_id: usize,
 }
 
 #[derive(Default, Debug, Clone, Copy)]

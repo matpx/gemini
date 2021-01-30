@@ -64,15 +64,15 @@ fn load_node(
             &index_data,
         );
 
-        let mesh_id = scene.geometries.insert(mesh);
+        let geometry_id = scene.geometries.insert(mesh);
 
         entity = scene.create_entity(transform);
 
         scene.components.meshes.insert(
             entity,
             MeshComponent {
-                mesh_id,
-                material_id: 0,
+                geometry_id,
+                pipeline_id: 0,
             },
         );
     } else {

@@ -55,8 +55,8 @@ pub fn render(
 
         for (entitiy_id, mesh) in scene.components.meshes.iter() {
             if let Some(transform) = scene.components.transforms.get(entitiy_id) {
-                let geometry = scene.geometries.get(mesh.mesh_id).unwrap();
-                let pipeline = scene.pipelines.get(mesh.material_id).unwrap();
+                let geometry = scene.geometries.get(mesh.geometry_id).unwrap();
+                let pipeline = scene.pipelines.get(mesh.pipeline_id).unwrap();
 
                 queue.write_buffer(
                     &geometry.local_buffer,
