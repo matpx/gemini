@@ -1,19 +1,16 @@
+use super::LoaderError;
 use crate::{
     components::{MeshComponent, TransformComponent},
-    gpu::{Geometry, UniformContext, Vertex},
+    gpu::{Context, Geometry, Vertex},
     scene::Scene,
 };
 use gltf::Node;
 use itertools::izip;
 use slotmap::DefaultKey;
 use std::collections::{hash_map::Entry, HashMap};
-use wgpu::Device;
-
-use super::LoaderError;
 
 fn load_node(
-    device: &Device,
-    uniforms: &UniformContext,
+    context: &Context,
     scene: &mut Scene,
     node: &Node,
     buffers: &[gltf::buffer::Data],
@@ -62,7 +59,7 @@ fn load_node(
                     }
                 }
 
-                let geometry = Geometry::new(&device, &vertex_data, &index_data);
+                let geometry = Geometry::new(&context.device, &vertex_data, &index_data);
 
                 let id = scene.geometries.insert(geometry);
 
@@ -76,7 +73,12 @@ fn load_node(
 
         scene.components.meshes.insert(
             entity,
-            MeshComponent::new(&device, &uniforms.local_bind_group_layout, geometry_id, 0),
+            MeshComponent::new(
+                &context.device,
+                &context.uniforms.local_bind_group_layout,
+                geometry_id,
+                0,
+            ),
         );
     } else {
         entity = scene.create_entity(transform);
@@ -84,8 +86,7 @@ fn load_node(
 
     for child_node in node.children() {
         load_node(
-            device,
-            uniforms,
+            context,
             scene,
             &child_node,
             buffers,
@@ -99,8 +100,7 @@ fn load_node(
 }
 
 pub fn load_gltf(
-    device: &Device,
-    uniforms: &UniformContext,
+    context: &Context,
     scene: &mut Scene,
     path: &str,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
@@ -115,8 +115,7 @@ pub fn load_gltf(
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
             load_node(
-                device,
-                uniforms,
+                context,
                 scene,
                 &node,
                 &buffers,

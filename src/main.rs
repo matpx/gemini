@@ -31,13 +31,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         &context.uniforms.local_bind_group_layout,
     ));
 
-    let test_model = resources::load_gltf(
-        &context.device,
-        &context.uniforms,
-        &mut scene,
-        "assets/gltf/monkey.glb",
-    )
-    .unwrap();
+    let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
     let camera = scene.create_entity(TransformComponent::default());
 
