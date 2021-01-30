@@ -1,3 +1,5 @@
+use std::collections::{hash_map::Entry, HashMap};
+
 use crate::{
     components::{MeshComponent, TransformComponent},
     gpu::{Geometry, UniformContext, Vertex},
@@ -18,6 +20,7 @@ fn load_node(
     buffers: &[gltf::buffer::Data],
     _images: &[gltf::image::Data],
     parent: Option<DefaultKey>,
+    known_meshes: &mut HashMap<usize, usize>,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
     let transform = TransformComponent {
@@ -31,40 +34,49 @@ fn load_node(
     let entity;
 
     if let Some(mesh) = node.mesh() {
-        let mut index_data: Vec<u32> = Vec::new();
-        let mut vertex_data: Vec<Vertex> = Vec::new();
+        let geometry_id = match known_meshes.entry(mesh.index()) {
+            Entry::Occupied(v) => *v.get(),
+            Entry::Vacant(v) => {
+                let mut index_data: Vec<u32> = Vec::new();
+                let mut vertex_data: Vec<Vertex> = Vec::new();
 
-        for primitive in mesh.primitives() {
-            let reader = primitive.reader(|b| Some(&buffers[b.index()]));
+                for primitive in mesh.primitives() {
+                    let reader = primitive.reader(|b| Some(&buffers[b.index()]));
 
-            let index_data_iter = reader.read_indices().ok_or(LoaderError)?;
-            let vertex_data_iter = reader.read_positions().ok_or(LoaderError)?;
-            let uv_data_iter = reader.read_tex_coords(0).ok_or(LoaderError {})?;
-            let normal_data_iter = reader.read_normals().ok_or(LoaderError {})?;
+                    let index_data_iter = reader.read_indices().ok_or(LoaderError)?;
+                    let vertex_data_iter = reader.read_positions().ok_or(LoaderError)?;
+                    let uv_data_iter = reader.read_tex_coords(0).ok_or(LoaderError {})?;
+                    let normal_data_iter = reader.read_normals().ok_or(LoaderError {})?;
 
-            for index in index_data_iter.into_u32() {
-                index_data.push(index);
+                    for index in index_data_iter.into_u32() {
+                        index_data.push(index);
+                    }
+
+                    for (position, uv, normal) in
+                        izip!(vertex_data_iter, uv_data_iter.into_f32(), normal_data_iter)
+                    {
+                        vertex_data.push(Vertex {
+                            position,
+                            uv,
+                            normal,
+                        });
+                    }
+                }
+
+                let geometry = Geometry::new(
+                    &device,
+                    &uniforms.local_bind_group_layout,
+                    &vertex_data,
+                    &index_data,
+                );
+
+                let id = scene.geometries.insert(geometry);
+
+                v.insert(id);
+
+                id
             }
-
-            for (position, uv, normal) in
-                izip!(vertex_data_iter, uv_data_iter.into_f32(), normal_data_iter)
-            {
-                vertex_data.push(Vertex {
-                    position,
-                    uv,
-                    normal,
-                });
-            }
-        }
-
-        let mesh = Geometry::new(
-            &device,
-            &uniforms.local_bind_group_layout,
-            &vertex_data,
-            &index_data,
-        );
-
-        let geometry_id = scene.geometries.insert(mesh);
+        };
 
         entity = scene.create_entity(transform);
 
@@ -88,6 +100,7 @@ fn load_node(
             buffers,
             _images,
             Some(entity),
+            known_meshes,
         )?;
     }
 
@@ -106,6 +119,8 @@ pub fn load_gltf(
 
     let root_entity = scene.create_entity(TransformComponent::default());
 
+    let mut known_meshes = HashMap::new();
+
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
             load_node(
@@ -116,6 +131,7 @@ pub fn load_gltf(
                 &buffers,
                 &images,
                 Some(root_entity),
+                &mut known_meshes,
             )?;
         }
     }
