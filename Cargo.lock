@@ -508,6 +508,7 @@ dependencies = [
  "pollster",
  "slab",
  "slotmap",
+ "smallvec",
  "wgpu",
  "winit",
 ]

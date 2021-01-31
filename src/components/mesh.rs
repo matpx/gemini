@@ -1,9 +1,10 @@
 use crate::gpu::uniform::TransformUniformData;
+use smallvec::SmallVec;
 use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
 
 #[derive(Default, Debug)]
 pub struct MeshComponent {
-    pub primitives: Vec<MeshPrimitive>,
+    pub primitives: SmallVec<[MeshPrimitive; 4]>,
 }
 
 #[derive(Debug)]
