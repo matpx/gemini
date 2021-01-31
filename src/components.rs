@@ -26,15 +26,20 @@ impl Default for TransformComponent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct MeshComponent {
+    pub primitives: Vec<PrimitiveComponent>,
+}
+
+#[derive(Debug)]
+pub struct PrimitiveComponent {
     pub geometry_id: usize,
     pub pipeline_id: usize,
     pub local_buffer: Buffer,
     pub local_bind_group: BindGroup,
 }
 
-impl MeshComponent {
+impl PrimitiveComponent {
     pub fn new(
         device: &Device,
         local_bind_group_layout: &BindGroupLayout,
@@ -58,7 +63,7 @@ impl MeshComponent {
             label: None,
         });
 
-        MeshComponent {
+        PrimitiveComponent {
             geometry_id,
             pipeline_id,
             local_buffer,

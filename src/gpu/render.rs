@@ -55,23 +55,25 @@ pub fn render(
 
         for (entitiy_id, mesh) in scene.components.meshes.iter() {
             if let Some(transform) = scene.components.transforms.get(entitiy_id) {
-                let geometry = scene.geometries.get(mesh.geometry_id).unwrap();
-                let pipeline = scene.pipelines.get(mesh.pipeline_id).unwrap();
+                for primitive in &mesh.primitives {
+                    let geometry = scene.geometries.get(primitive.geometry_id).unwrap();
+                    let pipeline = scene.pipelines.get(primitive.pipeline_id).unwrap();
 
-                queue.write_buffer(
-                    &mesh.local_buffer,
-                    0,
-                    bytemuck::bytes_of(&EntityUniform {
-                        model: transform.world,
-                    }),
-                );
+                    queue.write_buffer(
+                        &primitive.local_buffer,
+                        0,
+                        bytemuck::bytes_of(&EntityUniform {
+                            model: transform.world,
+                        }),
+                    );
 
-                rpass.set_pipeline(&pipeline.pipeline);
-                rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
-                rpass.set_bind_group(1, &mesh.local_bind_group, &[]);
-                rpass.set_index_buffer(geometry.index_buffer.slice(..));
-                rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
-                rpass.draw_indexed(0..geometry.index_count, 0, 0..1);
+                    rpass.set_pipeline(&pipeline.pipeline);
+                    rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
+                    rpass.set_bind_group(1, &primitive.local_bind_group, &[]);
+                    rpass.set_index_buffer(geometry.index_buffer.slice(..));
+                    rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
+                    rpass.draw_indexed(0..geometry.index_count, 0, 0..1);
+                }
             }
         }
     }

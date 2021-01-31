@@ -1,13 +1,44 @@
 use super::LoaderError;
 use crate::{
-    components::{MeshComponent, TransformComponent},
+    components::{MeshComponent, PrimitiveComponent, TransformComponent},
     gpu::{Context, Geometry, Vertex},
     scene::Scene,
 };
-use gltf::Node;
+use gltf::{Node, Primitive};
 use itertools::izip;
 use slotmap::DefaultKey;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
+
+fn load_primitive(
+    context: &Context,
+    buffers: &[gltf::buffer::Data],
+    primitive: &Primitive,
+) -> Result<Geometry, Box<dyn std::error::Error>> {
+    let mut index_data: Vec<u32> = Vec::new();
+    let mut vertex_data: Vec<Vertex> = Vec::new();
+
+    let reader = primitive.reader(|b| Some(&buffers[b.index()]));
+
+    let index_data_iter = reader.read_indices().ok_or(LoaderError)?;
+    let vertex_data_iter = reader.read_positions().ok_or(LoaderError)?;
+    let uv_data_iter = reader.read_tex_coords(0).ok_or(LoaderError {})?;
+    let normal_data_iter = reader.read_normals().ok_or(LoaderError {})?;
+
+    for index in index_data_iter.into_u32() {
+        index_data.push(index);
+    }
+
+    for (position, uv, normal) in izip!(vertex_data_iter, uv_data_iter.into_f32(), normal_data_iter)
+    {
+        vertex_data.push(Vertex {
+            position,
+            uv,
+            normal,
+        });
+    }
+
+    Ok(Geometry::new(&context.device, &vertex_data, &index_data))
+}
 
 fn load_node(
     context: &Context,
@@ -16,7 +47,7 @@ fn load_node(
     buffers: &[gltf::buffer::Data],
     _images: &[gltf::image::Data],
     parent: Option<DefaultKey>,
-    known_meshes: &mut HashMap<usize, usize>,
+    known_meshes: &mut HashMap<usize, DefaultKey>,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
     let transform = TransformComponent {
@@ -27,61 +58,26 @@ fn load_node(
         ..Default::default()
     };
 
-    let entity;
-
+    let entity = scene.create_entity(transform);
     if let Some(mesh) = node.mesh() {
-        let geometry_id = match known_meshes.entry(mesh.index()) {
-            Entry::Occupied(v) => *v.get(),
-            Entry::Vacant(v) => {
-                let mut index_data: Vec<u32> = Vec::new();
-                let mut vertex_data: Vec<Vertex> = Vec::new();
+        let mut mc = MeshComponent::default();
 
-                for primitive in mesh.primitives() {
-                    let reader = primitive.reader(|b| Some(&buffers[b.index()]));
+        for primitive in mesh.primitives() {
+            let geometry_id = scene
+                .geometries
+                .insert(load_primitive(context, buffers, &primitive)?);
 
-                    let index_data_iter = reader.read_indices().ok_or(LoaderError)?;
-                    let vertex_data_iter = reader.read_positions().ok_or(LoaderError)?;
-                    let uv_data_iter = reader.read_tex_coords(0).ok_or(LoaderError {})?;
-                    let normal_data_iter = reader.read_normals().ok_or(LoaderError {})?;
-
-                    for index in index_data_iter.into_u32() {
-                        index_data.push(index);
-                    }
-
-                    for (position, uv, normal) in
-                        izip!(vertex_data_iter, uv_data_iter.into_f32(), normal_data_iter)
-                    {
-                        vertex_data.push(Vertex {
-                            position,
-                            uv,
-                            normal,
-                        });
-                    }
-                }
-
-                let geometry = Geometry::new(&context.device, &vertex_data, &index_data);
-
-                let id = scene.geometries.insert(geometry);
-
-                v.insert(id);
-
-                id
-            }
-        };
-
-        entity = scene.create_entity(transform);
-
-        scene.components.meshes.insert(
-            entity,
-            MeshComponent::new(
+            let primitive = PrimitiveComponent::new(
                 &context.device,
                 &context.uniforms.local_bind_group_layout,
                 geometry_id,
                 0,
-            ),
-        );
-    } else {
-        entity = scene.create_entity(transform);
+            );
+
+            mc.primitives.push(primitive);
+        }
+
+        scene.components.meshes.insert(entity, mc);
     }
 
     for child_node in node.children() {
