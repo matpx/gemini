@@ -1,7 +1,7 @@
 use slotmap::DefaultKey;
 use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
 
-use crate::gpu::EntityUniform;
+use crate::gpu::uniform::TransformUniformData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
@@ -48,7 +48,7 @@ impl PrimitiveComponent {
     ) -> Self {
         let local_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
-            contents: bytemuck::bytes_of(&EntityUniform {
+            contents: bytemuck::bytes_of(&TransformUniformData {
                 model: glam::Mat4::identity(),
             }),
             usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,

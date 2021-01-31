@@ -1,7 +1,8 @@
-use super::{EntityUniform, GlobalUniform, UniformContext};
 use crate::scene::Scene;
 use slotmap::DefaultKey;
 use wgpu::{Device, Queue, SwapChain};
+
+use super::uniform::{CameraUniformData, TransformUniformData, UniformContext};
 
 pub fn render(
     device: &Device,
@@ -24,7 +25,7 @@ pub fn render(
     queue.write_buffer(
         &uniforms.global_uniform_buffer,
         0,
-        bytemuck::bytes_of(&GlobalUniform { view_proj }),
+        bytemuck::bytes_of(&CameraUniformData { view_proj }),
     );
 
     let frame = swap_chain
@@ -62,7 +63,7 @@ pub fn render(
                     queue.write_buffer(
                         &primitive.local_buffer,
                         0,
-                        bytemuck::bytes_of(&EntityUniform {
+                        bytemuck::bytes_of(&TransformUniformData {
                             model: transform.world,
                         }),
                     );

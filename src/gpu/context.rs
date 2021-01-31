@@ -1,9 +1,8 @@
 use super::{
-    uniform::UniformContext, EntityUniform, GlobalUniform, DEPTH_FORMAT, SWAPCHAIN_FORMAT,
+    uniform::{UniformContext, UniformLayouts},
+    DEPTH_FORMAT, SWAPCHAIN_FORMAT,
 };
-use wgpu::{
-    util::DeviceExt, Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor,
-};
+use wgpu::{Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor};
 use winit::dpi::PhysicalSize;
 
 pub struct Context {
@@ -16,6 +15,7 @@ pub struct Context {
     pub swap_chain_desc: SwapChainDescriptor,
     pub swap_chain: SwapChain,
     pub uniforms: UniformContext,
+    pub uniform_layouts: UniformLayouts,
 }
 
 impl Context {
@@ -53,78 +53,9 @@ impl Context {
 
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
-        let global_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::UniformBuffer {
-                        dynamic: false,
-                        min_binding_size: wgpu::BufferSize::new(
-                            std::mem::size_of::<GlobalUniform>() as wgpu::BufferAddress,
-                        ),
-                    },
-                    count: None,
-                }],
-                label: None,
-            });
+        let uniform_layouts = UniformLayouts::new(&device);
 
-        let global_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
-            contents: bytemuck::bytes_of(&GlobalUniform {
-                view_proj: glam::Mat4::identity(),
-            }),
-            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-        });
-
-        let global_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &global_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(global_uniform_buffer.slice(..)),
-            }],
-            label: None,
-        });
-
-        let local_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::UniformBuffer {
-                        dynamic: false,
-                        min_binding_size: wgpu::BufferSize::new(
-                            std::mem::size_of::<EntityUniform>() as wgpu::BufferAddress,
-                        ),
-                    },
-                    count: None,
-                }],
-                label: None,
-            });
-
-        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width: size.width,
-                height: size.height,
-                depth: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: DEPTH_FORMAT,
-            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-            label: None,
-        });
-
-        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let uniforms = UniformContext {
-            local_bind_group_layout,
-            global_bind_group_layout,
-            global_bind_group,
-            global_uniform_buffer,
-            depth_view,
-        };
+        let uniforms = UniformContext::new(&device, &uniform_layouts, &size);
 
         Context {
             size,
@@ -136,6 +67,7 @@ impl Context {
             swap_chain_desc,
             swap_chain,
             uniforms,
+            uniform_layouts,
         }
     }
 

@@ -69,7 +69,7 @@ fn load_node(
                 for ref_prim in &ref_mc.primitives {
                     mc.primitives.push(PrimitiveComponent::new(
                         &context.device,
-                        &context.uniforms.local_bind_group_layout,
+                        &context.uniform_layouts.local_bind_group_layout,
                         ref_prim.geometry_id,
                         ref_prim.pipeline_id,
                     ));
@@ -87,7 +87,7 @@ fn load_node(
 
                     let primitive = PrimitiveComponent::new(
                         &context.device,
-                        &context.uniforms.local_bind_group_layout,
+                        &context.uniform_layouts.local_bind_group_layout,
                         geometry_id,
                         0,
                     );
