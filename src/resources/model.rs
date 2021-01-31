@@ -1,6 +1,6 @@
 use super::LoaderError;
 use crate::{
-    components::{MeshComponent, PrimitiveComponent, TransformComponent},
+    components::{MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Vertex},
     scene::Scene,
 };
@@ -60,14 +60,14 @@ fn load_node(
 
     let entity = scene.create_entity(transform);
     if let Some(mesh) = node.mesh() {
-        let mesh_comp = match known_meshes.entry(mesh.index()) {
+        let mesh_component = match known_meshes.entry(mesh.index()) {
             Entry::Occupied(v) => {
-                let ref_mc = scene.components.meshes.get(*v.get()).unwrap();
+                let source_mesh_component = scene.components.meshes.get(*v.get()).unwrap();
 
                 let mut mc = MeshComponent::default();
 
-                for ref_prim in &ref_mc.primitives {
-                    mc.primitives.push(PrimitiveComponent::new(
+                for ref_prim in &source_mesh_component.primitives {
+                    mc.primitives.push(MeshPrimitive::new(
                         &context.device,
                         &context.uniform_layouts.local_bind_group_layout,
                         ref_prim.geometry_id,
@@ -85,7 +85,7 @@ fn load_node(
                         .geometries
                         .insert(load_primitive(context, buffers, &primitive)?);
 
-                    let primitive = PrimitiveComponent::new(
+                    let primitive = MeshPrimitive::new(
                         &context.device,
                         &context.uniform_layouts.local_bind_group_layout,
                         geometry_id,
@@ -100,7 +100,7 @@ fn load_node(
             }
         };
 
-        scene.components.meshes.insert(entity, mesh_comp);
+        scene.components.meshes.insert(entity, mesh_component);
     }
 
     for child_node in node.children() {
