@@ -7,7 +7,7 @@ use crate::{
 use gltf::{Node, Primitive};
 use itertools::izip;
 use slotmap::DefaultKey;
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 
 fn load_primitive(
     context: &Context,
@@ -60,24 +60,47 @@ fn load_node(
 
     let entity = scene.create_entity(transform);
     if let Some(mesh) = node.mesh() {
-        let mut mc = MeshComponent::default();
+        let mesh_comp = match known_meshes.entry(mesh.index()) {
+            Entry::Occupied(v) => {
+                let ref_mc = scene.components.meshes.get(*v.get()).unwrap();
 
-        for primitive in mesh.primitives() {
-            let geometry_id = scene
-                .geometries
-                .insert(load_primitive(context, buffers, &primitive)?);
+                let mut mc = MeshComponent::default();
 
-            let primitive = PrimitiveComponent::new(
-                &context.device,
-                &context.uniforms.local_bind_group_layout,
-                geometry_id,
-                0,
-            );
+                for ref_prim in &ref_mc.primitives {
+                    mc.primitives.push(PrimitiveComponent::new(
+                        &context.device,
+                        &context.uniforms.local_bind_group_layout,
+                        ref_prim.geometry_id,
+                        ref_prim.pipeline_id,
+                    ));
+                }
 
-            mc.primitives.push(primitive);
-        }
+                mc
+            }
+            Entry::Vacant(v) => {
+                let mut mc = MeshComponent::default();
 
-        scene.components.meshes.insert(entity, mc);
+                for primitive in mesh.primitives() {
+                    let geometry_id = scene
+                        .geometries
+                        .insert(load_primitive(context, buffers, &primitive)?);
+
+                    let primitive = PrimitiveComponent::new(
+                        &context.device,
+                        &context.uniforms.local_bind_group_layout,
+                        geometry_id,
+                        0,
+                    );
+
+                    mc.primitives.push(primitive);
+                }
+
+                v.insert(entity);
+                mc
+            }
+        };
+
+        scene.components.meshes.insert(entity, mesh_comp);
     }
 
     for child_node in node.children() {
