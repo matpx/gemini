@@ -1,6 +1,6 @@
 use super::{
     uniform::{UniformContext, UniformLayouts},
-    DEPTH_FORMAT, SWAPCHAIN_FORMAT,
+    DEPTH_FORMAT,
 };
 use wgpu::{Adapter, Device, Instance, Queue, Surface, SwapChain, SwapChainDescriptor};
 use winit::dpi::PhysicalSize;
@@ -25,7 +25,7 @@ impl Context {
         let surface = unsafe { instance.create_surface(window) };
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::Default,
+                power_preference: wgpu::PowerPreference::default(),
                 compatible_surface: Some(&surface),
             })
             .await
@@ -34,9 +34,9 @@ impl Context {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
+                    label: None,
                     features: wgpu::Features::empty(),
                     limits: wgpu::Limits::default(),
-                    shader_validation: true,
                 },
                 None,
             )
@@ -44,8 +44,8 @@ impl Context {
             .expect("Failed to create device");
 
         let swap_chain_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-            format: SWAPCHAIN_FORMAT,
+            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+            format: adapter.get_swap_chain_preferred_format(&surface),
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Mailbox,
@@ -89,7 +89,7 @@ impl Context {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: DEPTH_FORMAT,
-            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
             label: None,
         });
 

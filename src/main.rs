@@ -25,9 +25,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let mut input_manager = InputManager::new();
 
-    scene
-        .pipelines
-        .insert(Pipeline::new(&context.device, &context.uniform_layouts));
+    scene.pipelines.insert(Pipeline::new(
+        &context.device,
+        &context.uniform_layouts,
+        &context.swap_chain_desc,
+    ));
 
     let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 

@@ -38,6 +38,7 @@ pub fn render(
         device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     {
         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: None,
             color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
                 attachment: &frame.view,
                 resolve_target: None,
@@ -82,7 +83,7 @@ pub fn render(
                     rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
                     rpass.set_bind_group(1, &mesh.bind_group, &[]);
                     rpass.set_bind_group(2, &primitive.bind_group, &[]);
-                    rpass.set_index_buffer(geometry.index_buffer.slice(..));
+                    rpass.set_index_buffer(geometry.index_buffer.slice(..), super::INDEX_FORMAT);
                     rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
                     rpass.draw_indexed(0..geometry.index_count, 0, 0..1);
                 }

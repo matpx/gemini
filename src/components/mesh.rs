@@ -22,7 +22,13 @@ impl MeshComponent {
             layout: &uniform_layouts.transform_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(buffer.slice(..)),
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &buffer,
+                    offset: 0,
+                    size: wgpu::BufferSize::new(
+                        std::mem::size_of::<TransformUniformData>() as wgpu::BufferAddress
+                    ),
+                },
             }],
             label: None,
         });

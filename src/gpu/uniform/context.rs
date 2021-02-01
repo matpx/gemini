@@ -27,7 +27,13 @@ impl UniformContext {
             layout: &uniform_layouts.global_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(global_uniform_buffer.slice(..)),
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &global_uniform_buffer,
+                    offset: 0,
+                    size: wgpu::BufferSize::new(
+                        std::mem::size_of::<CameraUniformData>() as wgpu::BufferAddress
+                    ),
+                },
             }],
             label: None,
         });
@@ -42,7 +48,7 @@ impl UniformContext {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: DEPTH_FORMAT,
-            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
             label: None,
         });
 
