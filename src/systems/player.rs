@@ -1,9 +1,24 @@
-use crate::{input::InputManager, scene::Scene};
+use crate::{
+    components::{PlayerComponent, TransformComponent},
+    input::InputManager,
+    scene::Scene,
+};
 use slotmap::DefaultKey;
 
 pub struct PlayerSystem;
 
 impl PlayerSystem {
+    pub fn setup(scene: &mut Scene) -> DefaultKey {
+        let player_entity = scene.create_entity(TransformComponent::default());
+
+        scene
+            .components
+            .players
+            .insert(player_entity, PlayerComponent::default());
+
+        player_entity
+    }
+
     pub fn update(scene: &mut Scene, input_manager: &InputManager, player_entity: DefaultKey) {
         let transform_component = scene.components.transforms.get_mut(player_entity).unwrap();
         let player_component = scene.components.players.get_mut(player_entity).unwrap();

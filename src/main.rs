@@ -31,12 +31,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
-    let player_entity = scene.create_entity(TransformComponent::default());
-
-    scene
-        .components
-        .players
-        .insert(player_entity, PlayerComponent::default());
+    let player_entity = PlayerSystem::setup(&mut scene);
 
     let camera = scene.create_entity(TransformComponent {
         parent: Some(player_entity),
