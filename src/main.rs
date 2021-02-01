@@ -3,7 +3,7 @@ use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
 use std::f32::consts::PI;
-use systems::TransformSystem;
+use systems::{PlayerSystem, TransformSystem};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -31,7 +31,17 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
 
-    let camera = scene.create_entity(TransformComponent::default());
+    let player_entity = scene.create_entity(TransformComponent::default());
+
+    scene
+        .components
+        .players
+        .insert(player_entity, PlayerComponent::default());
+
+    let camera = scene.create_entity(TransformComponent {
+        parent: Some(player_entity),
+        ..Default::default()
+    });
 
     scene.components.cameras.insert(
         camera,
@@ -77,6 +87,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     .x += 0.001;
 
                 input_manager.update();
+
+                PlayerSystem::update(&mut scene, &input_manager, player_entity);
 
                 TransformSystem::update(&mut scene);
 

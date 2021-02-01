@@ -6,9 +6,9 @@ use winit::{
 
 #[derive(Default, Debug)]
 pub struct InputManager {
-    pressed_keys: HashSet<VirtualKeyCode>,
-    axis_a: glam::Vec2,
-    axis_b: glam::Vec2,
+    pub pressed_keys: HashSet<VirtualKeyCode>,
+    pub axis_a: glam::Vec2,
+    pub axis_b: glam::Vec2,
 
     last_mouse_pos: glam::Vec2,
     next_mouse_pos: glam::Vec2,

@@ -1,5 +1,5 @@
 use crate::{
-    components::{CameraComponent, MeshComponent, TransformComponent},
+    components::{CameraComponent, MeshComponent, PlayerComponent, TransformComponent},
     gpu::{Geometry, Pipeline},
 };
 use slab::Slab;
@@ -11,6 +11,7 @@ pub struct Components {
     pub transforms_sorted: Vec<DefaultKey>,
     pub meshes: SecondaryMap<DefaultKey, MeshComponent>,
     pub cameras: SecondaryMap<DefaultKey, CameraComponent>,
+    pub players: SecondaryMap<DefaultKey, PlayerComponent>,
 }
 
 #[derive(Default)]
