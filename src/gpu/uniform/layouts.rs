@@ -13,7 +13,7 @@ impl UniformLayouts {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+                    visibility: wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer {
                         dynamic: false,
                         min_binding_size: wgpu::BufferSize::new(
@@ -29,7 +29,7 @@ impl UniformLayouts {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+                    visibility: wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer {
                         dynamic: false,
                         min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<
