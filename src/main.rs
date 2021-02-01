@@ -5,9 +5,9 @@ use input::InputManager;
 use std::f32::consts::PI;
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
-    event::{Event, WindowEvent},
+    event::{Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::Window,
+    window::{Fullscreen, Window, WindowBuilder},
 };
 
 mod components;
@@ -70,6 +70,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
+                    if let Some(key_code) = input.virtual_keycode {
+                        if key_code == VirtualKeyCode::Escape {
+                            *control_flow = ControlFlow::Exit;
+                        }
+                    }
+
                     input_manager.handle_keyboard_event(input);
                 }
                 WindowEvent::CursorMoved { position, .. } => {
@@ -110,7 +116,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
 fn main() {
     let event_loop = EventLoop::new();
-    let window = Window::new(&event_loop).unwrap();
+    let window = WindowBuilder::new()
+        .with_title("-")
+        .with_fullscreen(Some(Fullscreen::Borderless(None)))
+        .build(&event_loop)
+        .unwrap();
 
     #[cfg(not(target_arch = "wasm32"))]
     {
