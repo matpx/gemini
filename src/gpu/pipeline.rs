@@ -1,16 +1,12 @@
-use super::{Vertex, DEPTH_FORMAT, SWAPCHAIN_FORMAT};
-use wgpu::{BindGroupLayout, Device};
+use super::{uniform::UniformLayouts, Vertex, DEPTH_FORMAT, SWAPCHAIN_FORMAT};
+use wgpu::Device;
 
 pub struct Pipeline {
     pub pipeline: wgpu::RenderPipeline,
 }
 
 impl Pipeline {
-    pub fn new(
-        device: &Device,
-        global_bind_group_layout: &BindGroupLayout,
-        local_bind_group_layout: &BindGroupLayout,
-    ) -> Self {
+    pub fn new(device: &Device, uniform_layouts: &UniformLayouts) -> Self {
         let vs_module =
             device.create_shader_module(wgpu::include_spirv!("../shader/unlit.vert.spv"));
         let fs_module =
@@ -18,7 +14,11 @@ impl Pipeline {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&global_bind_group_layout, &local_bind_group_layout],
+            bind_group_layouts: &[
+                &uniform_layouts.global_bind_group_layout,
+                &uniform_layouts.transform_bind_group_layout,
+                &uniform_layouts.primitive_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 

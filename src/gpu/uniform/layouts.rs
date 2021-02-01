@@ -1,8 +1,9 @@
-use super::{CameraUniformData, TransformUniformData};
+use super::{CameraUniformData, PrimitiveUniformData, TransformUniformData};
 use wgpu::{BindGroupLayout, Device};
 
 pub struct UniformLayouts {
-    pub local_bind_group_layout: BindGroupLayout,
+    pub transform_bind_group_layout: BindGroupLayout,
+    pub primitive_bind_group_layout: BindGroupLayout,
     pub global_bind_group_layout: BindGroupLayout,
 }
 
@@ -24,7 +25,7 @@ impl UniformLayouts {
                 label: None,
             });
 
-        let local_bind_group_layout =
+        let transform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
@@ -41,8 +42,26 @@ impl UniformLayouts {
                 label: None,
             });
 
+        let primitive_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::UniformBuffer {
+                        dynamic: false,
+                        min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<
+                            PrimitiveUniformData,
+                        >()
+                            as wgpu::BufferAddress),
+                    },
+                    count: None,
+                }],
+                label: None,
+            });
+
         Self {
-            local_bind_group_layout,
+            transform_bind_group_layout,
+            primitive_bind_group_layout,
             global_bind_group_layout,
         }
     }

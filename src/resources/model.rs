@@ -64,12 +64,12 @@ fn load_node(
             Entry::Occupied(v) => {
                 let source_mesh_component = scene.components.meshes.get(*v.get()).unwrap();
 
-                let mut mc = MeshComponent::default();
+                let mut mc = MeshComponent::new(&context.device, &context.uniform_layouts);
 
                 for ref_prim in &source_mesh_component.primitives {
                     mc.primitives.push(MeshPrimitive::new(
                         &context.device,
-                        &context.uniform_layouts.local_bind_group_layout,
+                        &context.uniform_layouts,
                         ref_prim.geometry_id,
                         ref_prim.pipeline_id,
                     ));
@@ -78,7 +78,7 @@ fn load_node(
                 mc
             }
             Entry::Vacant(v) => {
-                let mut mc = MeshComponent::default();
+                let mut mc = MeshComponent::new(&context.device, &context.uniform_layouts);
 
                 for primitive in mesh.primitives() {
                     let geometry_id = scene
@@ -87,7 +87,7 @@ fn load_node(
 
                     let primitive = MeshPrimitive::new(
                         &context.device,
-                        &context.uniform_layouts.local_bind_group_layout,
+                        &context.uniform_layouts,
                         geometry_id,
                         0,
                     );

@@ -2,7 +2,9 @@ use crate::scene::Scene;
 use slotmap::DefaultKey;
 use wgpu::{Device, Queue, SwapChain};
 
-use super::uniform::{CameraUniformData, TransformUniformData, UniformContext};
+use super::uniform::{
+    CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformContext,
+};
 
 pub fn render(
     device: &Device,
@@ -56,21 +58,30 @@ pub fn render(
 
         for (entitiy_id, mesh) in scene.components.meshes.iter() {
             if let Some(transform) = scene.components.transforms.get(entitiy_id) {
+                queue.write_buffer(
+                    &mesh.buffer,
+                    0,
+                    bytemuck::bytes_of(&TransformUniformData {
+                        model: transform.world,
+                    }),
+                );
+
                 for primitive in &mesh.primitives {
                     let geometry = scene.geometries.get(primitive.geometry_id).unwrap();
                     let pipeline = scene.pipelines.get(primitive.pipeline_id).unwrap();
 
                     queue.write_buffer(
-                        &primitive.local_buffer,
+                        &primitive.buffer,
                         0,
-                        bytemuck::bytes_of(&TransformUniformData {
-                            model: transform.world,
+                        bytemuck::bytes_of(&PrimitiveUniformData {
+                            color: glam::vec4(1.0, 0.0, 0.0, 1.0),
                         }),
                     );
 
                     rpass.set_pipeline(&pipeline.pipeline);
                     rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
-                    rpass.set_bind_group(1, &primitive.local_bind_group, &[]);
+                    rpass.set_bind_group(1, &mesh.bind_group, &[]);
+                    rpass.set_bind_group(2, &primitive.bind_group, &[]);
                     rpass.set_index_buffer(geometry.index_buffer.slice(..));
                     rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
                     rpass.draw_indexed(0..geometry.index_count, 0, 0..1);

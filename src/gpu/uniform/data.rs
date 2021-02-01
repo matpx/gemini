@@ -17,3 +17,12 @@ pub struct TransformUniformData {
 
 unsafe impl Pod for TransformUniformData {}
 unsafe impl Zeroable for TransformUniformData {}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PrimitiveUniformData {
+    pub color: glam::Vec4,
+}
+
+unsafe impl Pod for PrimitiveUniformData {}
+unsafe impl Zeroable for PrimitiveUniformData {}
