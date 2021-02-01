@@ -5,7 +5,7 @@ use input::InputManager;
 use std::f32::consts::PI;
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
-    event::{Event, VirtualKeyCode, WindowEvent},
+    event::{DeviceEvent, Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Fullscreen, Window, WindowBuilder},
 };
@@ -78,11 +78,15 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     input_manager.handle_keyboard_event(input);
                 }
-                WindowEvent::CursorMoved { position, .. } => {
-                    input_manager.handle_mouse_event(position);
-                }
+
                 _ => {}
             },
+            Event::DeviceEvent { event, .. } => {
+                if let DeviceEvent::MouseMotion { delta } = event {
+                    input_manager.handle_mouse_event(delta);
+                }
+            }
+
             Event::RedrawRequested(_) => {
                 scene
                     .components
@@ -121,6 +125,9 @@ fn main() {
         .with_fullscreen(Some(Fullscreen::Borderless(None)))
         .build(&event_loop)
         .unwrap();
+
+    window.set_cursor_grab(true).unwrap();
+    window.set_cursor_visible(false);
 
     #[cfg(not(target_arch = "wasm32"))]
     {

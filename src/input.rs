@@ -1,8 +1,5 @@
 use std::{collections::HashSet, ops::Mul, ops::MulAssign};
-use winit::{
-    dpi::PhysicalPosition,
-    event::{ElementState, KeyboardInput, VirtualKeyCode},
-};
+use winit::event::{ElementState, KeyboardInput, VirtualKeyCode};
 
 #[derive(Default, Debug)]
 pub struct InputManager {
@@ -32,8 +29,8 @@ impl InputManager {
         }
     }
 
-    pub fn handle_mouse_event(&mut self, position: PhysicalPosition<f64>) {
-        self.next_mouse_pos = glam::vec2(position.x as f32, position.y as f32);
+    pub fn handle_mouse_event(&mut self, delta: (f64, f64)) {
+        self.next_mouse_pos += glam::vec2(delta.0 as f32, delta.1 as f32);
 
         let new_axis_b = (self.next_mouse_pos - self.last_mouse_pos).mul(0.1);
 
