@@ -1,11 +1,15 @@
-use super::{CameraUniformData, UniformLayouts};
+use super::{CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformLayouts};
 use crate::gpu::DEPTH_FORMAT;
 use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, TextureView};
 use winit::dpi::PhysicalSize;
 
 pub struct UniformContext {
-    pub global_bind_group: BindGroup,
-    pub global_uniform_buffer: Buffer,
+    pub camera_bind_group: BindGroup,
+    pub camera_uniform_buffer: Buffer,
+    pub transform_bind_group: BindGroup,
+    pub transform_uniform_buffer: Buffer,
+    pub primitive_bind_group: BindGroup,
+    pub primitive_uniform_buffer: Buffer,
     pub depth_view: TextureView,
 }
 
@@ -15,7 +19,7 @@ impl UniformContext {
         uniform_layouts: &UniformLayouts,
         size: &PhysicalSize<u32>,
     ) -> Self {
-        let global_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let camera_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: bytemuck::bytes_of(&CameraUniformData {
                 view_proj: glam::Mat4::identity(),
@@ -23,15 +27,63 @@ impl UniformContext {
             usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
         });
 
-        let global_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &uniform_layouts.global_bind_group_layout,
+        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &uniform_layouts.camera_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: wgpu::BindingResource::Buffer {
-                    buffer: &global_uniform_buffer,
+                    buffer: &camera_uniform_buffer,
                     offset: 0,
                     size: wgpu::BufferSize::new(
                         std::mem::size_of::<CameraUniformData>() as wgpu::BufferAddress
+                    ),
+                },
+            }],
+            label: None,
+        });
+
+        assert!(std::mem::size_of::<TransformUniformData>() as u64 <= wgpu::BIND_BUFFER_ALIGNMENT);
+
+        let transform_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: super::BUFFER_ENTITIES_NUM * wgpu::BIND_BUFFER_ALIGNMENT,
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &uniform_layouts.transform_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &transform_uniform_buffer,
+                    offset: 0,
+                    size: wgpu::BufferSize::new(
+                        std::mem::size_of::<TransformUniformData>() as wgpu::BufferAddress
+                    ),
+                },
+            }],
+            label: None,
+        });
+
+        assert!(std::mem::size_of::<PrimitiveUniformData>() as u64 <= wgpu::BIND_BUFFER_ALIGNMENT);
+
+        let primitive_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: super::BUFFER_ENTITIES_NUM * wgpu::BIND_BUFFER_ALIGNMENT,
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let primitive_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &uniform_layouts.primitive_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &primitive_uniform_buffer,
+                    offset: 0,
+                    size: wgpu::BufferSize::new(
+                        std::mem::size_of::<PrimitiveUniformData>() as wgpu::BufferAddress
                     ),
                 },
             }],
@@ -55,8 +107,12 @@ impl UniformContext {
         let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         Self {
-            global_bind_group,
-            global_uniform_buffer,
+            camera_bind_group,
+            camera_uniform_buffer,
+            transform_bind_group,
+            transform_uniform_buffer,
+            primitive_bind_group,
+            primitive_uniform_buffer,
             depth_view,
         }
     }

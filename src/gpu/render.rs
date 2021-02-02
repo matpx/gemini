@@ -4,6 +4,7 @@ use wgpu::{Device, Queue, SwapChain};
 
 use super::uniform::{
     CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformContext,
+    BUFFER_ENTITIES_NUM,
 };
 
 pub fn render(
@@ -25,7 +26,7 @@ pub fn render(
     };
 
     queue.write_buffer(
-        &uniforms.global_uniform_buffer,
+        &uniforms.camera_uniform_buffer,
         0,
         bytemuck::bytes_of(&CameraUniformData { view_proj }),
     );
@@ -57,36 +58,53 @@ pub fn render(
             }),
         });
 
+        let mut transform_counter: u32 = 0;
+        let mut primitive_counter: u32 = 0;
+
         for (entitiy_id, mesh) in scene.components.meshes.iter() {
             if let Some(transform) = scene.components.transforms.get(entitiy_id) {
+                assert!(transform_counter < BUFFER_ENTITIES_NUM as wgpu::DynamicOffset);
+
+                let transform_offset: wgpu::DynamicOffset =
+                    transform_counter * wgpu::BIND_BUFFER_ALIGNMENT as wgpu::DynamicOffset;
+
                 queue.write_buffer(
-                    &mesh.buffer,
-                    0,
+                    &uniforms.transform_uniform_buffer,
+                    transform_offset as wgpu::BufferAddress,
                     bytemuck::bytes_of(&TransformUniformData {
                         model: transform.world,
                     }),
                 );
 
                 for primitive in &mesh.primitives {
+                    assert!(primitive_counter < BUFFER_ENTITIES_NUM as wgpu::DynamicOffset);
+
+                    let primitive_offset: wgpu::DynamicOffset =
+                        primitive_counter * wgpu::BIND_BUFFER_ALIGNMENT as wgpu::DynamicOffset;
+
                     let geometry = scene.geometries.get(primitive.geometry_id).unwrap();
                     let pipeline = scene.pipelines.get(primitive.pipeline_id).unwrap();
 
                     queue.write_buffer(
-                        &primitive.buffer,
-                        0,
+                        &uniforms.primitive_uniform_buffer,
+                        primitive_offset as wgpu::BufferAddress,
                         bytemuck::bytes_of(&PrimitiveUniformData {
                             color: glam::vec4(1.0, 0.0, 0.0, 1.0),
                         }),
                     );
 
                     rpass.set_pipeline(&pipeline.pipeline);
-                    rpass.set_bind_group(0, &uniforms.global_bind_group, &[]);
-                    rpass.set_bind_group(1, &mesh.bind_group, &[]);
-                    rpass.set_bind_group(2, &primitive.bind_group, &[]);
+                    rpass.set_bind_group(0, &uniforms.camera_bind_group, &[]);
+                    rpass.set_bind_group(1, &uniforms.transform_bind_group, &[transform_offset]);
+                    rpass.set_bind_group(2, &uniforms.primitive_bind_group, &[primitive_offset]);
                     rpass.set_index_buffer(geometry.index_buffer.slice(..), super::INDEX_FORMAT);
                     rpass.set_vertex_buffer(0, geometry.vertex_buffer.slice(..));
                     rpass.draw_indexed(0..geometry.index_count, 0, 0..1);
+
+                    primitive_counter += 1;
                 }
+
+                transform_counter += 1;
             }
         }
     }

@@ -24,7 +24,7 @@ impl Pipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[
-                &uniform_layouts.global_bind_group_layout,
+                &uniform_layouts.camera_bind_group_layout,
                 &uniform_layouts.transform_bind_group_layout,
                 &uniform_layouts.primitive_bind_group_layout,
             ],

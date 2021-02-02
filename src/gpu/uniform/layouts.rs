@@ -4,12 +4,12 @@ use wgpu::{BindGroupLayout, Device};
 pub struct UniformLayouts {
     pub transform_bind_group_layout: BindGroupLayout,
     pub primitive_bind_group_layout: BindGroupLayout,
-    pub global_bind_group_layout: BindGroupLayout,
+    pub camera_bind_group_layout: BindGroupLayout,
 }
 
 impl UniformLayouts {
     pub fn new(device: &Device) -> Self {
-        let global_bind_group_layout =
+        let camera_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
@@ -33,7 +33,7 @@ impl UniformLayouts {
                     visibility: wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
+                        has_dynamic_offset: true,
                         min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<
                             TransformUniformData,
                         >()
@@ -51,7 +51,7 @@ impl UniformLayouts {
                     visibility: wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
+                        has_dynamic_offset: true,
                         min_binding_size: wgpu::BufferSize::new(std::mem::size_of::<
                             PrimitiveUniformData,
                         >()
@@ -65,7 +65,7 @@ impl UniformLayouts {
         Self {
             transform_bind_group_layout,
             primitive_bind_group_layout,
-            global_bind_group_layout,
+            camera_bind_group_layout,
         }
     }
 }
