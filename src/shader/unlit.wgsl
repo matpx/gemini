@@ -64,5 +64,5 @@ var r_primitive: Primitive;
 
 [[stage(fragment)]]
 fn fs_main() {
-    out_color = vec4<f32>(1.0,1.0,1.0,1.0);
+    out_color = r_primitive.color;
 }

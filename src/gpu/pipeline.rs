@@ -13,7 +13,7 @@ impl Pipeline {
         uniform_layouts: &UniformLayouts,
         sc_desc: &SwapChainDescriptor,
     ) -> Self {
-        let flags = wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION;
+        let flags = wgpu::ShaderFlags::VALIDATION;
 
         let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: None,
