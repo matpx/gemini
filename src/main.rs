@@ -2,6 +2,7 @@ use components::TransformComponent;
 use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
+use resources::ResourceManager;
 use std::f32::consts::PI;
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
@@ -24,14 +25,24 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut scene = scene::Scene::new();
 
     let mut input_manager = InputManager::new();
+    let mut resource_manager = ResourceManager::default();
 
-    scene.pipelines.insert(Pipeline::new(
+    resource_manager.pipelines.insert(Pipeline::new(
         &context.device,
         &context.uniform_layouts,
         &context.swap_chain_desc,
     ));
 
-    let test_model = resources::load_gltf(&context, &mut scene, "assets/gltf/monkey.glb").unwrap();
+    let mut model_scene = scene::Scene::new();
+    let test_model = resources::load_gltf(
+        &context,
+        &mut resource_manager,
+        &mut model_scene,
+        "assets/gltf/monkey.glb",
+    )
+    .unwrap();
+
+    scene.copy_from(&model_scene);
 
     let player_entity = PlayerSystem::setup(&mut scene);
 
@@ -104,6 +115,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 gpu::render(
                     &context.device,
                     &context.queue,
+                    &resource_manager,
                     &mut context.swap_chain,
                     &context.uniforms,
                     &scene,

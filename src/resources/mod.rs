@@ -1,5 +1,7 @@
+mod manager;
 mod model;
 
+pub use manager::ResourceManager;
 pub use model::load_gltf;
 
 #[derive(Debug, Clone)]

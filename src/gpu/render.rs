@@ -1,4 +1,4 @@
-use crate::scene::Scene;
+use crate::{resources::ResourceManager, scene::Scene};
 use slotmap::DefaultKey;
 use wgpu::{Device, Queue, SwapChain};
 
@@ -10,6 +10,7 @@ use super::uniform::{
 pub fn render(
     device: &Device,
     queue: &Queue,
+    resource_manager: &ResourceManager,
     swap_chain: &mut SwapChain,
     uniforms: &UniformContext,
     scene: &Scene,
@@ -82,8 +83,14 @@ pub fn render(
                     let primitive_offset: wgpu::DynamicOffset =
                         primitive_counter * wgpu::BIND_BUFFER_ALIGNMENT as wgpu::DynamicOffset;
 
-                    let geometry = scene.geometries.get(primitive.geometry_id).unwrap();
-                    let pipeline = scene.pipelines.get(primitive.pipeline_id).unwrap();
+                    let geometry = resource_manager
+                        .geometries
+                        .get(primitive.geometry_id)
+                        .unwrap();
+                    let pipeline = resource_manager
+                        .pipelines
+                        .get(primitive.pipeline_id)
+                        .unwrap();
 
                     queue.write_buffer(
                         &uniforms.primitive_uniform_buffer,

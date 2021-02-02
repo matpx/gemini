@@ -1,4 +1,4 @@
-use super::LoaderError;
+use super::{LoaderError, ResourceManager};
 use crate::{
     components::{MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Vertex},
@@ -42,6 +42,7 @@ fn load_primitive(
 
 fn load_node(
     context: &Context,
+    resource_manager: &mut ResourceManager,
     scene: &mut Scene,
     node: &Node,
     buffers: &[gltf::buffer::Data],
@@ -79,7 +80,7 @@ fn load_node(
                 let mut mc = MeshComponent::new();
 
                 for primitive in mesh.primitives() {
-                    let geometry_id = scene
+                    let geometry_id = resource_manager
                         .geometries
                         .insert(load_primitive(context, buffers, &primitive)?);
 
@@ -99,6 +100,7 @@ fn load_node(
     for child_node in node.children() {
         load_node(
             context,
+            resource_manager,
             scene,
             &child_node,
             buffers,
@@ -113,6 +115,7 @@ fn load_node(
 
 pub fn load_gltf(
     context: &Context,
+    resource_manager: &mut ResourceManager,
     scene: &mut Scene,
     path: &str,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
@@ -128,6 +131,7 @@ pub fn load_gltf(
         for node in document_scene.nodes() {
             load_node(
                 context,
+                resource_manager,
                 scene,
                 &node,
                 &buffers,
