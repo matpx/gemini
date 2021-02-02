@@ -8,4 +8,4 @@ pub use data::PrimitiveUniformData;
 pub use data::TransformUniformData;
 pub use layouts::UniformLayouts;
 
-pub const BUFFER_ENTITIES_NUM: u64 = 32;
+pub const BUFFER_ENTITIES_NUM: u64 = 1024;
