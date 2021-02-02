@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::{uniform::UniformLayouts, Vertex};
 use wgpu::{Device, SwapChainDescriptor};
 
@@ -11,10 +13,13 @@ impl Pipeline {
         uniform_layouts: &UniformLayouts,
         sc_desc: &SwapChainDescriptor,
     ) -> Self {
-        let vs_module =
-            device.create_shader_module(&wgpu::include_spirv!("../shader/unlit.vert.spv"));
-        let fs_module =
-            device.create_shader_module(&wgpu::include_spirv!("../shader/unlit.frag.spv"));
+        let flags = wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION;
+
+        let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("../shader/unlit.wgsl"))),
+            flags,
+        });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
@@ -30,8 +35,8 @@ impl Pipeline {
             label: None,
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &vs_module,
-                entry_point: "main",
+                module: &shader,
+                entry_point: "vs_main",
                 buffers: &[wgpu::VertexBufferLayout {
                     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
                     step_mode: wgpu::InputStepMode::Vertex,
@@ -55,8 +60,8 @@ impl Pipeline {
                 }],
             },
             fragment: Some(wgpu::FragmentState {
-                module: &fs_module,
-                entry_point: "main",
+                module: &shader,
+                entry_point: "fs_main",
                 targets: &[sc_desc.format.into()],
             }),
             primitive: wgpu::PrimitiveState {
