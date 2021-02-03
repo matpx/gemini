@@ -53,15 +53,11 @@ impl Scene {
             }
 
             if let Some(other_camera) = other.components.cameras.get(other_key) {
-                self.components
-                    .cameras
-                    .insert(self_key, other_camera.clone());
+                self.components.cameras.insert(self_key, *other_camera);
             }
 
             if let Some(other_player) = other.components.players.get(other_key) {
-                self.components
-                    .players
-                    .insert(self_key, other_player.clone());
+                self.components.players.insert(self_key, *other_player);
             }
         }
     }

@@ -46,7 +46,7 @@ fn load_node(
     scene: &mut Scene,
     node: &Node,
     buffers: &[gltf::buffer::Data],
-    _images: &[gltf::image::Data],
+    //_images: &[gltf::image::Data],
     parent: Option<DefaultKey>,
     known_meshes: &mut HashMap<usize, DefaultKey>,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
@@ -104,7 +104,7 @@ fn load_node(
             scene,
             &child_node,
             buffers,
-            _images,
+            //_images,
             Some(entity),
             known_meshes,
         )?;
@@ -135,7 +135,7 @@ pub fn load_gltf(
                 scene,
                 &node,
                 &buffers,
-                &images,
+                //&images,
                 Some(root_entity),
                 &mut known_meshes,
             )?;
