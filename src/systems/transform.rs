@@ -1,5 +1,4 @@
-use crate::scene::Scene;
-
+use crate::resources::scene::Scene;
 pub struct TransformSystem;
 
 impl TransformSystem {

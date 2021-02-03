@@ -1,8 +1,7 @@
-use super::{LoaderError, ResourceManager};
+use super::{manager::ResourceManager, scene::Scene, LoaderError};
 use crate::{
     components::{MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Vertex},
-    scene::Scene,
 };
 use gltf::{Node, Primitive};
 use itertools::izip;

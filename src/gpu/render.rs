@@ -1,4 +1,4 @@
-use crate::{resources::ResourceManager, scene::Scene};
+use crate::resources::{manager::ResourceManager, scene::Scene};
 use slotmap::DefaultKey;
 use wgpu::{Device, Queue, SwapChain};
 

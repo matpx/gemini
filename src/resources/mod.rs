@@ -1,8 +1,8 @@
-mod manager;
-mod model;
-
-pub use manager::ResourceManager;
-pub use model::load_gltf;
+pub mod manager;
+pub mod map;
+pub mod model;
+pub mod prefab;
+pub mod scene;
 
 #[derive(Debug, Clone)]
 pub struct LoaderError;

@@ -1,7 +1,15 @@
-use std::collections::HashMap;
-
-use crate::components::{CameraComponent, MeshComponent, PlayerComponent, TransformComponent};
+use super::LoaderError;
+use crate::{
+    components::{CameraComponent, MeshComponent, PlayerComponent, TransformComponent},
+    gpu::Context,
+    resources::{
+        manager::ResourceManager,
+        map::{Map, Node},
+        prefab::Prefab,
+    },
+};
 use slotmap::{DefaultKey, HopSlotMap, SecondaryMap};
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Components {
@@ -30,7 +38,7 @@ impl Scene {
         key
     }
 
-    pub fn copy_from(&mut self, other: &Scene) {
+    pub fn copy_from(&mut self, other: &Scene) -> HashMap<DefaultKey, DefaultKey> {
         let mut parent_mapping = HashMap::<DefaultKey, DefaultKey>::new();
 
         for (other_key, transform) in &other.components.transforms {
@@ -60,5 +68,43 @@ impl Scene {
                 self.components.players.insert(self_key, *other_player);
             }
         }
+
+        parent_mapping
+    }
+
+    fn load_node_subtree(
+        &mut self,
+        context: &Context,
+        resource_manager: &mut ResourceManager,
+        prefabs: &[Prefab],
+        node: &Node,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(model) = node.prefab_id {
+            let prefab = prefabs.get(model).ok_or(LoaderError)?;
+            let _mapping = self.copy_from(&prefab.scene);
+        }
+
+        for child_node in &node.children {
+            self.load_node_subtree(context, resource_manager, &prefabs, child_node)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn load_map(
+        &mut self,
+        context: &Context,
+        resource_manager: &mut ResourceManager,
+        map: &Map,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut prefabs = Vec::new();
+
+        for model_id in &map.prefabs {
+            prefabs.push(Prefab::from_gltf(context, resource_manager, model_id)?);
+        }
+
+        self.load_node_subtree(context, resource_manager, &prefabs, &map.root)?;
+
+        Ok(())
     }
 }

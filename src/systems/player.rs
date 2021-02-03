@@ -1,7 +1,7 @@
 use crate::{
     components::{PlayerComponent, TransformComponent},
     input::InputManager,
-    scene::Scene,
+    resources::scene::Scene,
 };
 use slotmap::DefaultKey;
 

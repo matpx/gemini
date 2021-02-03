@@ -2,7 +2,7 @@ use components::TransformComponent;
 use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
-use resources::ResourceManager;
+use resources::{manager::ResourceManager, map::Map, scene::Scene};
 use std::f32::consts::PI;
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
@@ -15,34 +15,32 @@ mod components;
 mod gpu;
 mod input;
 mod resources;
-mod scene;
 mod shapes;
 mod systems;
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut context = Context::new(&window).await;
 
-    let mut scene = scene::Scene::new();
+    let mut scene = Scene::new();
 
     let mut input_manager = InputManager::new();
     let mut resource_manager = ResourceManager::default();
+
+    let mut test_map = Map::default();
+    test_map
+        .prefabs
+        .push(String::from("assets/gltf/monkey.glb"));
+    test_map.root.prefab_id = Some(0);
+
+    scene
+        .load_map(&context, &mut resource_manager, &test_map)
+        .unwrap();
 
     resource_manager.pipelines.insert(Pipeline::new(
         &context.device,
         &context.uniform_layouts,
         &context.swap_chain_desc,
     ));
-
-    let mut model_scene = scene::Scene::new();
-    let test_model = resources::load_gltf(
-        &context,
-        &mut resource_manager,
-        &mut model_scene,
-        "assets/gltf/monkey.glb",
-    )
-    .unwrap();
-
-    scene.copy_from(&model_scene);
 
     let player_entity = PlayerSystem::setup(&mut scene);
 
@@ -96,14 +94,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             }
 
             Event::RedrawRequested(_) => {
-                scene
-                    .components
-                    .transforms
-                    .get_mut(test_model)
-                    .unwrap()
-                    .translation
-                    .x += 0.001;
-
                 input_manager.update();
 
                 PlayerSystem::update(&mut scene, &input_manager, player_entity);
