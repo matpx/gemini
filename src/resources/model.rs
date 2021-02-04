@@ -1,14 +1,14 @@
 use super::{manager::ResourceManager, prefab::Prefab, scene::Scene, LoaderError};
 use crate::{
     components::{MeshComponent, MeshPrimitive, TransformComponent},
-    gpu::{Context, Geometry, Vertex},
+    gpu::{Context, Geometry, Texture, Vertex},
 };
 use gltf::{Node, Primitive};
 use itertools::izip;
 use slotmap::DefaultKey;
 use std::collections::{hash_map::Entry, HashMap};
 
-fn load_primitive(
+fn load_primitive_geometry(
     context: &Context,
     buffers: &[gltf::buffer::Data],
     primitive: &Primitive,
@@ -39,13 +39,39 @@ fn load_primitive(
     Ok(Geometry::new(&context.device, &vertex_data, &index_data))
 }
 
+fn load_primitive_textures(
+    context: &Context,
+    images: &[gltf::image::Data],
+    primitive: &Primitive,
+) -> Option<Texture> {
+    if let Some(info) = primitive
+        .material()
+        .pbr_metallic_roughness()
+        .base_color_texture()
+    {
+        let image_data = &images[info.texture().index()];
+
+        let texture = Texture::new(
+            &context.device,
+            &context.queue,
+            &context.uniform_layouts,
+            (image_data.width, image_data.height),
+            &image_data.pixels,
+        );
+
+        Some(texture)
+    } else {
+        None
+    }
+}
+
 fn load_node(
     context: &Context,
     resource_manager: &mut ResourceManager,
     scene: &mut Scene,
     node: &Node,
     buffers: &[gltf::buffer::Data],
-    //_images: &[gltf::image::Data],
+    images: &[gltf::image::Data],
     parent: Option<DefaultKey>,
     known_meshes: &mut HashMap<usize, DefaultKey>,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
@@ -60,43 +86,52 @@ fn load_node(
 
     let entity = scene.create_entity(transform);
     if let Some(mesh) = node.mesh() {
-        let mesh_component = match known_meshes.entry(mesh.index()) {
-            Entry::Occupied(v) => {
-                let source_mesh_component = scene.meshes.get(*v.get()).unwrap();
+        let mesh_component =
+            match known_meshes.entry(mesh.index()) {
+                Entry::Occupied(v) => {
+                    let source_mesh_component = scene.meshes.get(*v.get()).unwrap();
 
-                let mut mc = MeshComponent::new();
+                    let mut mc = MeshComponent::new();
 
-                for ref_prim in &source_mesh_component.primitives {
-                    mc.primitives.push(MeshPrimitive {
-                        geometry_id: ref_prim.geometry_id,
-                        pipeline_id: ref_prim.pipeline_id,
-                        color_texture: None,
-                    });
+                    for ref_prim in &source_mesh_component.primitives {
+                        mc.primitives.push(MeshPrimitive {
+                            geometry_id: ref_prim.geometry_id,
+                            pipeline_id: ref_prim.pipeline_id,
+                            color_texture: ref_prim.color_texture,
+                        });
+                    }
+
+                    mc
                 }
+                Entry::Vacant(v) => {
+                    let mut mc = MeshComponent::new();
 
-                mc
-            }
-            Entry::Vacant(v) => {
-                let mut mc = MeshComponent::new();
+                    for gltf_primitive in mesh.primitives() {
+                        let geometry_id = resource_manager
+                            .geometries
+                            .insert(load_primitive_geometry(context, buffers, &gltf_primitive)?);
 
-                for primitive in mesh.primitives() {
-                    let geometry_id = resource_manager
-                        .geometries
-                        .insert(load_primitive(context, buffers, &primitive)?);
+                        let texture_id = if let Some(texture) =
+                            load_primitive_textures(context, images, &gltf_primitive)
+                        {
+                            Some(resource_manager.texture.insert(texture))
+                        } else {
+                            None
+                        };
 
-                    let primitive = MeshPrimitive {
-                        geometry_id,
-                        pipeline_id: 0,
-                        color_texture: None,
-                    };
+                        let mesh_primitive = MeshPrimitive {
+                            geometry_id,
+                            pipeline_id: 0,
+                            color_texture: texture_id,
+                        };
 
-                    mc.primitives.push(primitive);
+                        mc.primitives.push(mesh_primitive);
+                    }
+
+                    v.insert(entity);
+                    mc
                 }
-
-                v.insert(entity);
-                mc
-            }
-        };
+            };
 
         scene.meshes.insert(entity, mesh_component);
     }
@@ -108,7 +143,7 @@ fn load_node(
             scene,
             &child_node,
             buffers,
-            //_images,
+            images,
             Some(entity),
             known_meshes,
         )?;
@@ -139,7 +174,7 @@ pub fn load_gltf(
                 &mut prefab.scene,
                 &node,
                 &buffers,
-                //&images,
+                &images,
                 Some(prefab.root),
                 &mut known_meshes,
             )?;
