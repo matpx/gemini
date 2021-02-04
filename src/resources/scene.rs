@@ -69,8 +69,6 @@ impl Scene {
 
     fn load_node(
         &mut self,
-        context: &Context,
-        resource_manager: &mut ResourceManager,
         prefabs: &[Prefab],
         node: &Node,
         parent: Option<DefaultKey>,
@@ -95,7 +93,7 @@ impl Scene {
         };
 
         for child in &node.children {
-            self.load_node(context, resource_manager, prefabs, child, Some(new_id))?;
+            self.load_node(prefabs, child, Some(new_id))?;
         }
 
         Ok(())
@@ -113,7 +111,7 @@ impl Scene {
             prefabs.push(load_gltf(context, resource_manager, prefab_id)?);
         }
 
-        self.load_node(context, resource_manager, &prefabs, &map.root, None)?;
+        self.load_node(&prefabs, &map.root, None)?;
 
         Ok(())
     }

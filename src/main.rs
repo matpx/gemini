@@ -2,7 +2,11 @@ use components::TransformComponent;
 use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
-use resources::{manager::ResourceManager, map::Map, scene::Scene};
+use resources::{
+    manager::ResourceManager,
+    map::{Map, Node},
+    scene::Scene,
+};
 use std::f32::consts::PI;
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
@@ -30,7 +34,13 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     test_map
         .prefabs
         .push(String::from("assets/gltf/monkey.glb"));
+
     test_map.root.prefab_id = Some(0);
+    test_map.root.children.push(Node {
+        translation: glam::vec3(3.0, 0.0, 0.0),
+        prefab_id: Some(0),
+        ..Default::default()
+    });
 
     scene
         .load_map(&context, &mut resource_manager, &test_map)
