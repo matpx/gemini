@@ -3,9 +3,9 @@ pub struct TransformSystem;
 
 impl TransformSystem {
     pub fn update(scene: &mut Scene) {
-        let transforms = &mut scene.components.transforms;
+        let transforms = &mut scene.transforms;
 
-        scene.components.transforms_sorted.retain(|&key| {
+        scene.transforms_sorted.retain(|&key| {
             let parent_world;
             let parent_key;
 

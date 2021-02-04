@@ -49,7 +49,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         ..Default::default()
     });
 
-    scene.components.cameras.insert(
+    scene.cameras.insert(
         camera,
         CameraComponent::new(
             PI / 4.0,
@@ -70,7 +70,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 WindowEvent::Resized(size) => {
                     context.resize(size);
 
-                    for (_, camera) in scene.components.cameras.iter_mut() {
+                    for (_, camera) in scene.cameras.iter_mut() {
                         camera.aspect = size.width as f32 / size.height as f32;
                         camera.update_projection_matrix();
                     }

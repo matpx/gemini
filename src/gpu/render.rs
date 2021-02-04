@@ -17,8 +17,8 @@ pub fn render(
     camera: DefaultKey,
 ) {
     let view_proj = {
-        let camera_transform = scene.components.transforms.get(camera).unwrap();
-        let camera_comp = scene.components.cameras.get(camera).unwrap();
+        let camera_transform = scene.transforms.get(camera).unwrap();
+        let camera_comp = scene.cameras.get(camera).unwrap();
 
         let proj = camera_comp.proj;
         let view = camera_transform.world.inverse();
@@ -62,8 +62,8 @@ pub fn render(
         let mut transform_counter: u32 = 0;
         let mut primitive_counter: u32 = 0;
 
-        for (entitiy_id, mesh) in scene.components.meshes.iter() {
-            if let Some(transform) = scene.components.transforms.get(entitiy_id) {
+        for (entitiy_id, mesh) in scene.meshes.iter() {
+            if let Some(transform) = scene.transforms.get(entitiy_id) {
                 assert!(transform_counter < BUFFER_ENTITIES_NUM as wgpu::DynamicOffset);
 
                 let transform_offset: wgpu::DynamicOffset =

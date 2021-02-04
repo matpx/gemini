@@ -12,7 +12,6 @@ impl PlayerSystem {
         let player_entity = scene.create_entity(TransformComponent::default());
 
         scene
-            .components
             .players
             .insert(player_entity, PlayerComponent::default());
 
@@ -20,8 +19,8 @@ impl PlayerSystem {
     }
 
     pub fn update(scene: &mut Scene, input_manager: &InputManager, player_entity: DefaultKey) {
-        let transform_component = scene.components.transforms.get_mut(player_entity).unwrap();
-        let player_component = scene.components.players.get_mut(player_entity).unwrap();
+        let transform_component = scene.transforms.get_mut(player_entity).unwrap();
+        let player_component = scene.players.get_mut(player_entity).unwrap();
 
         let speed_multiplier = 0.01;
         let rotation_multiplier = 0.01;

@@ -1,4 +1,4 @@
-use super::{manager::ResourceManager, scene::Scene, LoaderError};
+use super::{manager::ResourceManager, prefab::Prefab, scene::Scene, LoaderError};
 use crate::{
     components::{MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Vertex},
@@ -62,7 +62,7 @@ fn load_node(
     if let Some(mesh) = node.mesh() {
         let mesh_component = match known_meshes.entry(mesh.index()) {
             Entry::Occupied(v) => {
-                let source_mesh_component = scene.components.meshes.get(*v.get()).unwrap();
+                let source_mesh_component = scene.meshes.get(*v.get()).unwrap();
 
                 let mut mc = MeshComponent::new();
 
@@ -93,7 +93,7 @@ fn load_node(
             }
         };
 
-        scene.components.meshes.insert(entity, mesh_component);
+        scene.meshes.insert(entity, mesh_component);
     }
 
     for child_node in node.children() {
@@ -115,14 +115,14 @@ fn load_node(
 pub fn load_gltf(
     context: &Context,
     resource_manager: &mut ResourceManager,
-    scene: &mut Scene,
     path: &str,
-) -> Result<DefaultKey, Box<dyn std::error::Error>> {
+) -> Result<Prefab, Box<dyn std::error::Error>> {
     let (document, buffers, images) = gltf::import(path)?;
     assert_eq!(buffers.len(), document.buffers().count());
     assert_eq!(images.len(), document.images().count());
 
-    let root_entity = scene.create_entity(TransformComponent::default());
+    let mut prefab = Prefab::default();
+    prefab.root = prefab.scene.create_entity(TransformComponent::default());
 
     let mut known_meshes = HashMap::new();
 
@@ -131,15 +131,15 @@ pub fn load_gltf(
             load_node(
                 context,
                 resource_manager,
-                scene,
+                &mut prefab.scene,
                 &node,
                 &buffers,
                 //&images,
-                Some(root_entity),
+                Some(prefab.root),
                 &mut known_meshes,
             )?;
         }
     }
 
-    Ok(root_entity)
+    Ok(prefab)
 }

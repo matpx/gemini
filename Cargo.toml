@@ -8,7 +8,7 @@ version = "0.1.0"
 
 [dependencies]
 bytemuck = "1.5.0"
-glam = "0.12.0"
+glam = {version = "0.12.0", features = ["serde"]}
 gltf = "0.15.2"
 itertools = "0.10.0"
 pollster = "0.2.1"
