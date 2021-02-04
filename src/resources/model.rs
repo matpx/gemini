@@ -96,7 +96,7 @@ fn load_primitive_textures(
                     copy_buffer = extend_data_color(&image_data.pixels, 6, 8);
                     &copy_buffer
                 },
-                TextureFormat::Bgra8Unorm,
+                TextureFormat::Rgba16Uint,
             ),
             gltf::image::Format::R16G16B16A16 => (&image_data.pixels, TextureFormat::Rgba16Uint),
         };
