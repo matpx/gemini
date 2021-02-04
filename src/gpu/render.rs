@@ -1,11 +1,10 @@
-use crate::resources::{manager::ResourceManager, scene::Scene};
-use slotmap::DefaultKey;
-use wgpu::{Device, Queue, SwapChain};
-
 use super::uniform::{
     CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformContext,
     BUFFER_ENTITIES_NUM,
 };
+use crate::resources::{manager::ResourceManager, scene::Scene};
+use slotmap::DefaultKey;
+use wgpu::{Device, Queue, SwapChain};
 
 pub fn render(
     device: &Device,
@@ -91,6 +90,13 @@ pub fn render(
                         .pipelines
                         .get(primitive.pipeline_id)
                         .unwrap();
+                    if let Some(texture_key) = primitive.color_texture {
+                        let color_texture = resource_manager.texture.get(texture_key).unwrap();
+
+                        rpass.set_bind_group(3, &color_texture.bind_group, &[]);
+                    } else {
+                        rpass.set_bind_group(3, &uniforms.dummy_texture.bind_group, &[]);
+                    }
 
                     queue.write_buffer(
                         &uniforms.primitive_uniform_buffer,

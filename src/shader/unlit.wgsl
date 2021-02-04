@@ -61,8 +61,13 @@ struct Primitive {
 [[group(2), binding(0)]]
 var r_primitive: Primitive;
 
+[[group(3), binding(0)]]
+var r_color: texture_2d<f32>;
+[[group(3), binding(1)]]
+var r_sampler: sampler;
+
 
 [[stage(fragment)]]
 fn fs_main() {
-    out_color = r_primitive.color;
+    out_color = textureSample(r_color, r_sampler, in_uv_fs);
 }

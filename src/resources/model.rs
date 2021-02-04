@@ -67,10 +67,11 @@ fn load_node(
                 let mut mc = MeshComponent::new();
 
                 for ref_prim in &source_mesh_component.primitives {
-                    mc.primitives.push(MeshPrimitive::new(
-                        ref_prim.geometry_id,
-                        ref_prim.pipeline_id,
-                    ));
+                    mc.primitives.push(MeshPrimitive {
+                        geometry_id: ref_prim.geometry_id,
+                        pipeline_id: ref_prim.pipeline_id,
+                        color_texture: None,
+                    });
                 }
 
                 mc
@@ -83,7 +84,11 @@ fn load_node(
                         .geometries
                         .insert(load_primitive(context, buffers, &primitive)?);
 
-                    let primitive = MeshPrimitive::new(geometry_id, 0);
+                    let primitive = MeshPrimitive {
+                        geometry_id,
+                        pipeline_id: 0,
+                        color_texture: None,
+                    };
 
                     mc.primitives.push(primitive);
                 }

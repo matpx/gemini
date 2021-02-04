@@ -55,7 +55,7 @@ impl Context {
 
         let uniform_layouts = UniformLayouts::new(&device);
 
-        let uniforms = UniformContext::new(&device, &uniform_layouts, &size);
+        let uniforms = UniformContext::new(&device, &queue, &uniform_layouts, &size);
 
         Context {
             size,

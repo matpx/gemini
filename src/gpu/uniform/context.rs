@@ -1,6 +1,7 @@
 use super::{CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformLayouts};
-use crate::gpu::DEPTH_FORMAT;
-use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, TextureView};
+use crate::gpu::{texture, DEPTH_FORMAT};
+use texture::Texture;
+use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, Queue, TextureView};
 use winit::dpi::PhysicalSize;
 
 pub struct UniformContext {
@@ -11,11 +12,13 @@ pub struct UniformContext {
     pub primitive_bind_group: BindGroup,
     pub primitive_uniform_buffer: Buffer,
     pub depth_view: TextureView,
+    pub dummy_texture: Texture,
 }
 
 impl UniformContext {
     pub fn new(
         device: &Device,
+        queue: &Queue,
         uniform_layouts: &UniformLayouts,
         size: &PhysicalSize<u32>,
     ) -> Self {
@@ -106,6 +109,14 @@ impl UniformContext {
 
         let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
+        let dummy_texture = Texture::new(
+            device,
+            queue,
+            uniform_layouts,
+            (32, 32),
+            &vec![255; 32 * 32 * 4],
+        );
+
         Self {
             camera_bind_group,
             camera_uniform_buffer,
@@ -114,6 +125,7 @@ impl UniformContext {
             primitive_bind_group,
             primitive_uniform_buffer,
             depth_view,
+            dummy_texture,
         }
     }
 }

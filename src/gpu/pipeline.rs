@@ -27,6 +27,7 @@ impl Pipeline {
                 &uniform_layouts.camera_bind_group_layout,
                 &uniform_layouts.transform_bind_group_layout,
                 &uniform_layouts.primitive_bind_group_layout,
+                &uniform_layouts.color_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });
