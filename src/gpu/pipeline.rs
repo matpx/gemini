@@ -66,7 +66,7 @@ impl Pipeline {
                 targets: &[sc_desc.format.into()],
             }),
             primitive: wgpu::PrimitiveState {
-                front_face: wgpu::FrontFace::Ccw,
+                front_face: wgpu::FrontFace::Cw,
                 cull_mode: wgpu::CullMode::Back,
                 ..Default::default()
             },

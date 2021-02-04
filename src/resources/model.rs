@@ -7,6 +7,7 @@ use gltf::{Node, Primitive};
 use itertools::izip;
 use slotmap::DefaultKey;
 use std::collections::{hash_map::Entry, HashMap};
+use wgpu::TextureFormat;
 
 fn load_primitive_geometry(
     context: &Context,
@@ -39,6 +40,22 @@ fn load_primitive_geometry(
     Ok(Geometry::new(&context.device, &vertex_data, &index_data))
 }
 
+fn extend_data_color(data: &[u8], from_size: usize, to_size: usize) -> Vec<u8> {
+    assert!(to_size > from_size);
+
+    let mut out_data = Vec::with_capacity((data.len() / from_size) * to_size);
+
+    for chunk in data.chunks(from_size) {
+        out_data.extend_from_slice(chunk);
+
+        for _ in 0..to_size - from_size {
+            out_data.push(255);
+        }
+    }
+
+    out_data
+}
+
 fn load_primitive_textures(
     context: &Context,
     images: &[gltf::image::Data],
@@ -51,12 +68,46 @@ fn load_primitive_textures(
     {
         let image_data = &images[info.texture().index()];
 
+        let copy_buffer;
+
+        let (pixels, format) = match image_data.format {
+            gltf::image::Format::R8 => (&image_data.pixels, TextureFormat::R8Unorm),
+            gltf::image::Format::R8G8 => (&image_data.pixels, TextureFormat::Rg8Unorm),
+            gltf::image::Format::R8G8B8 => (
+                {
+                    copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
+                    &copy_buffer
+                },
+                TextureFormat::Rgba8Unorm,
+            ),
+            gltf::image::Format::R8G8B8A8 => (&image_data.pixels, TextureFormat::Rgba8Unorm),
+            gltf::image::Format::B8G8R8 => (
+                {
+                    copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
+                    &copy_buffer
+                },
+                TextureFormat::Bgra8Unorm,
+            ),
+            gltf::image::Format::B8G8R8A8 => (&image_data.pixels, TextureFormat::Bgra8Unorm),
+            gltf::image::Format::R16 => (&image_data.pixels, TextureFormat::R16Uint),
+            gltf::image::Format::R16G16 => (&image_data.pixels, TextureFormat::Rg16Uint),
+            gltf::image::Format::R16G16B16 => (
+                {
+                    copy_buffer = extend_data_color(&image_data.pixels, 6, 8);
+                    &copy_buffer
+                },
+                TextureFormat::Bgra8Unorm,
+            ),
+            gltf::image::Format::R16G16B16A16 => (&image_data.pixels, TextureFormat::Rgba16Uint),
+        };
+
         let texture = Texture::new(
             &context.device,
             &context.queue,
             &context.uniform_layouts,
             (image_data.width, image_data.height),
-            &image_data.pixels,
+            format,
+            &pixels,
         );
 
         Some(texture)

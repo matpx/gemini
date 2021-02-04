@@ -114,6 +114,7 @@ impl UniformContext {
             queue,
             uniform_layouts,
             (32, 32),
+            wgpu::TextureFormat::Rgba8UnormSrgb,
             &vec![255; 32 * 32 * 4],
         );
 

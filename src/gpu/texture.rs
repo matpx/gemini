@@ -13,10 +13,9 @@ impl Texture {
         queue: &Queue,
         uniform_layouts: &UniformLayouts,
         size: (u32, u32),
+        format: wgpu::TextureFormat,
         data: &[u8],
     ) -> Self {
-        assert!(data.len() == (size.0 * size.1 * 4) as usize);
-
         let texture_extent = wgpu::Extent3d {
             width: size.0,
             height: size.1,
@@ -31,7 +30,7 @@ impl Texture {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                format,
                 usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
             },
             &data,
