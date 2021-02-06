@@ -3,11 +3,23 @@ use crate::{
     components::{material::PbrMaterial, MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Texture, Vertex},
 };
-use gltf::{Node, Primitive};
+use gltf::{buffer, image, Node, Primitive};
 use itertools::izip;
 use slotmap::DefaultKey;
 use std::collections::{hash_map::Entry, HashMap};
 use wgpu::TextureFormat;
+
+#[derive(Debug)]
+struct GltfData {
+    buffers: Vec<buffer::Data>,
+    images: Vec<image::Data>,
+}
+
+#[derive(Debug, Default)]
+struct CacheData {
+    known_meshes: HashMap<usize, MeshComponent>,
+    known_textures: HashMap<usize, usize>,
+}
 
 fn load_primitive_geometry(
     context: &Context,
@@ -109,14 +121,13 @@ fn load_primitive_textures(
 fn load_primtive(
     context: &Context,
     resource_manager: &mut ResourceManager,
-    buffers: &[gltf::buffer::Data],
-    images: &[gltf::image::Data],
+    gltf_data: &GltfData,
     gltf_primitive: &Primitive,
     known_textures: &mut HashMap<usize, usize>,
 ) -> Result<MeshPrimitive, Box<dyn std::error::Error>> {
     let geometry_id = resource_manager.geometries.insert(load_primitive_geometry(
         context,
-        buffers,
+        &gltf_data.buffers,
         &gltf_primitive,
     )?);
 
@@ -126,7 +137,7 @@ fn load_primtive(
         let source_index = info.texture().source().index();
 
         Some(*known_textures.entry(source_index).or_insert_with(|| {
-            let texture = load_primitive_textures(context, images, source_index);
+            let texture = load_primitive_textures(context, &gltf_data.images, source_index);
 
             resource_manager.texture.insert(texture)
         }))
@@ -151,11 +162,9 @@ fn load_node(
     resource_manager: &mut ResourceManager,
     scene: &mut Scene,
     node: &Node,
-    buffers: &[gltf::buffer::Data],
-    images: &[gltf::image::Data],
+    gltf_data: &GltfData,
     parent: Option<DefaultKey>,
-    known_meshes: &mut HashMap<usize, MeshComponent>,
-    known_textures: &mut HashMap<usize, usize>,
+    cache: &mut CacheData,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
     let transform = TransformComponent {
@@ -168,7 +177,7 @@ fn load_node(
 
     let entity = scene.create_entity(transform);
     if let Some(mesh) = node.mesh() {
-        let mesh_component = match known_meshes.entry(mesh.index()) {
+        let mesh_component = match cache.known_meshes.entry(mesh.index()) {
             Entry::Occupied(v) => v.get().clone(),
             Entry::Vacant(v) => {
                 let mut mc = MeshComponent::new();
@@ -177,10 +186,9 @@ fn load_node(
                     mc.primitives.push(load_primtive(
                         context,
                         resource_manager,
-                        buffers,
-                        images,
+                        gltf_data,
                         &gltf_primitive,
-                        known_textures,
+                        &mut cache.known_textures,
                     )?);
                 }
 
@@ -199,11 +207,9 @@ fn load_node(
             resource_manager,
             scene,
             &child_node,
-            buffers,
-            images,
+            gltf_data,
             Some(entity),
-            known_meshes,
-            known_textures,
+            cache,
         )?;
     }
 
@@ -219,11 +225,12 @@ pub fn load_gltf(
     assert_eq!(buffers.len(), document.buffers().count());
     assert_eq!(images.len(), document.images().count());
 
+    let gltf_data = GltfData { buffers, images };
+
     let mut prefab = Prefab::default();
     prefab.root = prefab.scene.create_entity(TransformComponent::default());
 
-    let mut known_meshes = HashMap::new();
-    let mut known_textures = HashMap::new();
+    let mut cache = CacheData::default();
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
@@ -232,11 +239,9 @@ pub fn load_gltf(
                 resource_manager,
                 &mut prefab.scene,
                 &node,
-                &buffers,
-                &images,
+                &gltf_data,
                 Some(prefab.root),
-                &mut known_meshes,
-                &mut known_textures,
+                &mut cache,
             )?;
         }
     }
