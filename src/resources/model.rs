@@ -43,14 +43,14 @@ fn load_primitive_geometry(
 fn extend_data_color(data: &[u8], from_size: usize, to_size: usize) -> Vec<u8> {
     assert!(to_size > from_size);
 
+    let padding_values = vec![255; to_size - from_size];
+
     let mut out_data = Vec::with_capacity((data.len() / from_size) * to_size);
 
     for chunk in data.chunks(from_size) {
         out_data.extend_from_slice(chunk);
 
-        for _ in 0..to_size - from_size {
-            out_data.push(255);
-        }
+        out_data.extend(&padding_values);
     }
 
     out_data
@@ -59,61 +59,53 @@ fn extend_data_color(data: &[u8], from_size: usize, to_size: usize) -> Vec<u8> {
 fn load_primitive_textures(
     context: &Context,
     images: &[gltf::image::Data],
-    primitive: &Primitive,
-) -> Option<Texture> {
-    if let Some(info) = primitive
-        .material()
-        .pbr_metallic_roughness()
-        .base_color_texture()
-    {
-        let image_data = &images[info.texture().index()];
+    source_index: usize,
+) -> Texture {
+    let image_data = &images[source_index];
 
-        let copy_buffer;
+    let copy_buffer;
 
-        let (pixels, format) = match image_data.format {
-            gltf::image::Format::R8 => (&image_data.pixels, TextureFormat::R8Unorm),
-            gltf::image::Format::R8G8 => (&image_data.pixels, TextureFormat::Rg8Unorm),
-            gltf::image::Format::R8G8B8 => (
-                {
-                    copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
-                    &copy_buffer
-                },
-                TextureFormat::Rgba8Unorm,
-            ),
-            gltf::image::Format::R8G8B8A8 => (&image_data.pixels, TextureFormat::Rgba8Unorm),
-            gltf::image::Format::B8G8R8 => (
-                {
-                    copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
-                    &copy_buffer
-                },
-                TextureFormat::Bgra8Unorm,
-            ),
-            gltf::image::Format::B8G8R8A8 => (&image_data.pixels, TextureFormat::Bgra8Unorm),
-            gltf::image::Format::R16 => (&image_data.pixels, TextureFormat::R16Uint),
-            gltf::image::Format::R16G16 => (&image_data.pixels, TextureFormat::Rg16Uint),
-            gltf::image::Format::R16G16B16 => (
-                {
-                    copy_buffer = extend_data_color(&image_data.pixels, 6, 8);
-                    &copy_buffer
-                },
-                TextureFormat::Rgba16Uint,
-            ),
-            gltf::image::Format::R16G16B16A16 => (&image_data.pixels, TextureFormat::Rgba16Uint),
-        };
+    let (pixels, format) = match image_data.format {
+        gltf::image::Format::R8 => (&image_data.pixels, TextureFormat::R8Unorm),
+        gltf::image::Format::R8G8 => (&image_data.pixels, TextureFormat::Rg8Unorm),
+        gltf::image::Format::R8G8B8 => (
+            {
+                copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
+                &copy_buffer
+            },
+            TextureFormat::Rgba8Unorm,
+        ),
+        gltf::image::Format::R8G8B8A8 => (&image_data.pixels, TextureFormat::Rgba8Unorm),
+        gltf::image::Format::B8G8R8 => (
+            {
+                copy_buffer = extend_data_color(&image_data.pixels, 3, 4);
+                &copy_buffer
+            },
+            TextureFormat::Bgra8Unorm,
+        ),
+        gltf::image::Format::B8G8R8A8 => (&image_data.pixels, TextureFormat::Bgra8Unorm),
+        gltf::image::Format::R16 => (&image_data.pixels, TextureFormat::R16Uint),
+        gltf::image::Format::R16G16 => (&image_data.pixels, TextureFormat::Rg16Uint),
+        gltf::image::Format::R16G16B16 => (
+            {
+                copy_buffer = extend_data_color(&image_data.pixels, 6, 8);
+                &copy_buffer
+            },
+            TextureFormat::Rgba16Uint,
+        ),
+        gltf::image::Format::R16G16B16A16 => (&image_data.pixels, TextureFormat::Rgba16Uint),
+    };
 
-        let texture = Texture::new(
-            &context.device,
-            &context.queue,
-            &context.uniform_layouts,
-            (image_data.width, image_data.height),
-            format,
-            &pixels,
-        );
+    let texture = Texture::new(
+        &context.device,
+        &context.queue,
+        &context.uniform_layouts,
+        (image_data.width, image_data.height),
+        format,
+        &pixels,
+    );
 
-        Some(texture)
-    } else {
-        None
-    }
+    texture
 }
 
 fn load_primtive(
@@ -122,6 +114,7 @@ fn load_primtive(
     buffers: &[gltf::buffer::Data],
     images: &[gltf::image::Data],
     gltf_primitive: &Primitive,
+    known_textures: &mut HashMap<usize, usize>,
 ) -> Result<MeshPrimitive, Box<dyn std::error::Error>> {
     let geometry_id = resource_manager.geometries.insert(load_primitive_geometry(
         context,
@@ -129,12 +122,21 @@ fn load_primtive(
         &gltf_primitive,
     )?);
 
-    let texture_id =
-        if let Some(texture) = load_primitive_textures(context, images, &gltf_primitive) {
-            Some(resource_manager.texture.insert(texture))
-        } else {
-            None
-        };
+    let texture_id = if let Some(info) = gltf_primitive
+        .material()
+        .pbr_metallic_roughness()
+        .base_color_texture()
+    {
+        let source_index = info.texture().source().index();
+
+        Some(*known_textures.entry(source_index).or_insert_with(|| {
+            let texture = load_primitive_textures(context, images, source_index);
+
+            resource_manager.texture.insert(texture)
+        }))
+    } else {
+        None
+    };
 
     Ok(MeshPrimitive {
         geometry_id,
@@ -152,6 +154,7 @@ fn load_node(
     images: &[gltf::image::Data],
     parent: Option<DefaultKey>,
     known_meshes: &mut HashMap<usize, MeshComponent>,
+    known_textures: &mut HashMap<usize, usize>,
 ) -> Result<DefaultKey, Box<dyn std::error::Error>> {
     let gltf_transform = node.transform().decomposed();
     let transform = TransformComponent {
@@ -176,6 +179,7 @@ fn load_node(
                         buffers,
                         images,
                         &gltf_primitive,
+                        known_textures,
                     )?);
                 }
 
@@ -198,6 +202,7 @@ fn load_node(
             images,
             Some(entity),
             known_meshes,
+            known_textures,
         )?;
     }
 
@@ -217,6 +222,7 @@ pub fn load_gltf(
     prefab.root = prefab.scene.create_entity(TransformComponent::default());
 
     let mut known_meshes = HashMap::new();
+    let mut known_textures = HashMap::new();
 
     for document_scene in document.scenes() {
         for node in document_scene.nodes() {
@@ -229,6 +235,7 @@ pub fn load_gltf(
                 &images,
                 Some(prefab.root),
                 &mut known_meshes,
+                &mut known_textures,
             )?;
         }
     }
