@@ -1,6 +1,8 @@
-#[derive(Debug, Default, Clone)]
+use super::material::PbrMaterial;
+
+#[derive(Debug, Default, Clone, Copy)]
 pub struct MeshPrimitive {
     pub geometry_id: usize,
     pub pipeline_id: usize,
-    pub color_texture: Option<usize>,
+    pub material: PbrMaterial,
 }

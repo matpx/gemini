@@ -1,6 +1,6 @@
 use super::{manager::ResourceManager, prefab::Prefab, scene::Scene, LoaderError};
 use crate::{
-    components::{MeshComponent, MeshPrimitive, TransformComponent},
+    components::{material::PbrMaterial, MeshComponent, MeshPrimitive, TransformComponent},
     gpu::{Context, Geometry, Texture, Vertex},
 };
 use gltf::{Node, Primitive};
@@ -96,16 +96,14 @@ fn load_primitive_textures(
         gltf::image::Format::R16G16B16A16 => (&image_data.pixels, TextureFormat::Rgba16Uint),
     };
 
-    let texture = Texture::new(
+    Texture::new(
         &context.device,
         &context.queue,
         &context.uniform_layouts,
         (image_data.width, image_data.height),
         format,
         &pixels,
-    );
-
-    texture
+    )
 }
 
 fn load_primtive(
@@ -122,11 +120,9 @@ fn load_primtive(
         &gltf_primitive,
     )?);
 
-    let texture_id = if let Some(info) = gltf_primitive
-        .material()
-        .pbr_metallic_roughness()
-        .base_color_texture()
-    {
+    let gltf_pbr_material = gltf_primitive.material().pbr_metallic_roughness();
+
+    let color_texture = if let Some(info) = gltf_pbr_material.base_color_texture() {
         let source_index = info.texture().source().index();
 
         Some(*known_textures.entry(source_index).or_insert_with(|| {
@@ -138,10 +134,15 @@ fn load_primtive(
         None
     };
 
+    let material = PbrMaterial {
+        color: gltf_pbr_material.base_color_factor().into(),
+        color_texture,
+    };
+
     Ok(MeshPrimitive {
         geometry_id,
         pipeline_id: 0,
-        color_texture: texture_id,
+        material,
     })
 }
 

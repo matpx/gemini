@@ -1,4 +1,5 @@
 mod camera;
+pub mod material;
 mod mesh;
 mod player;
 mod primitive;

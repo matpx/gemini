@@ -1,5 +1,6 @@
 use super::uniform::{
-    CameraUniformData, TransformUniformData, UniformContext, BUFFER_ENTITIES_NUM,
+    CameraUniformData, PrimitiveUniformData, TransformUniformData, UniformContext,
+    BUFFER_ENTITIES_NUM,
 };
 use crate::resources::{manager::ResourceManager, scene::Scene};
 use slotmap::DefaultKey;
@@ -89,7 +90,7 @@ pub fn render(
                         .pipelines
                         .get(primitive.pipeline_id)
                         .unwrap();
-                    if let Some(texture_key) = primitive.color_texture {
+                    if let Some(texture_key) = primitive.material.color_texture {
                         let color_texture = resource_manager.texture.get(texture_key).unwrap();
 
                         rpass.set_bind_group(3, &color_texture.bind_group, &[]);
@@ -97,13 +98,13 @@ pub fn render(
                         rpass.set_bind_group(3, &uniforms.dummy_texture.bind_group, &[]);
                     }
 
-                    /*queue.write_buffer(
+                    queue.write_buffer(
                         &uniforms.primitive_uniform_buffer,
                         primitive_offset as wgpu::BufferAddress,
                         bytemuck::bytes_of(&PrimitiveUniformData {
-                            color: glam::vec4(1.0, 1.0, 1.0, 1.0),
+                            color: primitive.material.color,
                         }),
-                    );*/
+                    );
 
                     rpass.set_pipeline(&pipeline.pipeline);
                     rpass.set_bind_group(0, &uniforms.camera_bind_group, &[]);

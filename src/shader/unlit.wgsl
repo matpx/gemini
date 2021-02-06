@@ -69,5 +69,5 @@ var r_sampler: sampler;
 
 [[stage(fragment)]]
 fn fs_main() {
-    out_color = textureSample(r_color, r_sampler, in_uv_fs);
+    out_color = textureSample(r_color, r_sampler, in_uv_fs) * r_primitive.color;
 }
