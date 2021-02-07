@@ -2,6 +2,7 @@ use components::TransformComponent;
 use components::*;
 use gpu::{Context, Pipeline};
 use input::InputManager;
+use physics::PhysicsWorld;
 use resources::{
     manager::ResourceManager,
     map::{Map, Node},
@@ -18,6 +19,7 @@ use winit::{
 mod components;
 mod gpu;
 mod input;
+mod physics;
 mod resources;
 mod shapes;
 mod systems;
@@ -30,8 +32,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut input_manager = InputManager::new();
     let mut resource_manager = ResourceManager::default();
 
+    let mut physics_world = PhysicsWorld::new();
+
     let mut last_time = Instant::now();
-    let mut delta_time = 0.0;
 
     let mut test_map = Map::default();
     test_map
@@ -109,8 +112,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             Event::RedrawRequested(_) => {
                 input_manager.update();
 
-                delta_time = (last_time.elapsed().as_micros() as f32) / 1000.0;
+                let delta_time = (last_time.elapsed().as_micros() as f32) / 1000.0;
                 last_time = Instant::now();
+
+                physics_world.update(delta_time);
 
                 PlayerSystem::update(&mut scene, &input_manager, player_entity, delta_time);
 
