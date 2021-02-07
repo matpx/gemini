@@ -18,11 +18,16 @@ impl PlayerSystem {
         player_entity
     }
 
-    pub fn update(scene: &mut Scene, input_manager: &InputManager, player_entity: DefaultKey) {
+    pub fn update(
+        scene: &mut Scene,
+        input_manager: &InputManager,
+        player_entity: DefaultKey,
+        delta_time: f32,
+    ) {
         let transform_component = scene.transforms.get_mut(player_entity).unwrap();
         let player_component = scene.players.get_mut(player_entity).unwrap();
 
-        let speed_multiplier = 0.01;
+        let speed_multiplier = 0.005;
         let rotation_multiplier = 0.01;
 
         player_component.x += input_manager.axis_b.x * rotation_multiplier;
@@ -42,6 +47,10 @@ impl PlayerSystem {
         );
 
         add_translation = transform_component.rotation * add_translation;
+
+        add_translation.x *= delta_time;
+        add_translation.y *= delta_time;
+        add_translation.z *= delta_time;
 
         transform_component.translation += add_translation;
     }

@@ -7,7 +7,7 @@ use resources::{
     map::{Map, Node},
     scene::Scene,
 };
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Instant};
 use systems::{PlayerSystem, TransformSystem};
 use winit::{
     event::{DeviceEvent, Event, VirtualKeyCode, WindowEvent},
@@ -29,6 +29,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let mut input_manager = InputManager::new();
     let mut resource_manager = ResourceManager::default();
+
+    let mut last_time = Instant::now();
+    let mut delta_time = 0.0;
 
     let mut test_map = Map::default();
     test_map
@@ -106,7 +109,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             Event::RedrawRequested(_) => {
                 input_manager.update();
 
-                PlayerSystem::update(&mut scene, &input_manager, player_entity);
+                delta_time = (last_time.elapsed().as_micros() as f32) / 1000.0;
+                last_time = Instant::now();
+
+                PlayerSystem::update(&mut scene, &input_manager, player_entity, delta_time);
 
                 TransformSystem::update(&mut scene);
 
